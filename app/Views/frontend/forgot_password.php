@@ -1,0 +1,64 @@
+<?= $this->extend('frontend/layout') ?>
+
+<?= $this->section('content') ?>
+<main class="main">
+
+        <!-- breadcrumb -->
+        <div class="site-breadcrumb">
+            <div class="site-breadcrumb-bg" style="background: url(<?= base_url('assets/img/breadcrumb/01.jpg') ?>)"></div>
+            <div class="container">
+                <div class="site-breadcrumb-wrap">
+                    <h4 class="breadcrumb-title">Forgot Password</h4>
+                    <ul class="breadcrumb-menu">
+                        <li><a href="<?= base_url() ?>"><i class="far fa-home"></i> Home</a></li>
+                        <li class="active">Forgot Password</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- breadcrumb end -->
+
+
+        <!-- forgot password -->
+        <div class="login-area py-100">
+            <div class="container">
+                <div class="col-md-5 mx-auto">
+                    <div class="login-form">
+                        <div class="login-header">
+                            <?php if ($logo = get_setting('company_logo')): ?>
+                                <img src="<?= base_url($logo) ?>" alt="<?= esc(get_setting('company_name', 'OyeGifts')) ?>" style="max-height: 45px; object-fit: contain;">
+                            <?php else: ?>
+                                <img src="<?= base_url('assets/img/logo/logo.png') ?>" alt="">
+                            <?php endif; ?>
+                            <p>Reset your <?= esc(get_setting('company_name', 'GiftShop')) ?> account password</p>
+                        </div>
+
+                        <?php if (session()->getFlashdata('error')): ?>
+                            <div class="alert alert-danger" style="padding: 10px 15px; border-radius: 4px; margin-bottom: 20px; font-size: 14px;">
+                                <?= esc(session()->getFlashdata('error')) ?>
+                            </div>
+                        <?php endif; ?>
+                        <?php if (session()->getFlashdata('success')): ?>
+                            <div class="alert alert-success" style="padding: 10px 15px; border-radius: 4px; margin-bottom: 20px; font-size: 14px;">
+                                <?= session()->getFlashdata('success') // do not escape since we show HTML link for local reset link simulation ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <form action="<?= base_url('forgot-password') ?>" method="post">
+                            <?= csrf_field() ?>
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input type="email" name="email" class="form-control" placeholder="Your Email" required>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <button type="submit" class="theme-btn"><i class="far fa-key"></i> Send Reset Link</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- forgot password end -->
+
+    </main>
+<?= $this->endSection() ?>
