@@ -1101,7 +1101,7 @@ if (!$frontendMenu) {
                     <div class="row">
                         <div class="col-12 col-lg-6 align-self-center">
                             <p class="copyright-text">
-                                &copy; Copyright <?= date('Y') ?> <a href="<?= base_url() ?>"> <?= esc(get_setting('company_name', 'GiftShop')) ?> </a>. All Rights Reserved. | Developed by <a href="https://codepractice.in/" target="_blank" style="color: #e76f51;">CodePractice Technologies.
+                                &copy; Copyright <?= date('Y') ?> <a href="<?= base_url() ?>"> <?= esc(get_setting('company_name', 'GiftShop')) ?> </a>. All Rights Reserved. | Developed by <a href="https://codepractice.in/" target="_blank" style="color: #e76f51;">CodePractice Technologies.</a>
 
                             </p>
                         </div>
