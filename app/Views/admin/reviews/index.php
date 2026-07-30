@@ -166,7 +166,6 @@
 <script>
 $(document).ready(function() {
     $('#product_search').select2({
-        dropdownParent: $('.card-custom'),
         ajax: {
             url: '<?= base_url('admin/reviews/search-products') ?>',
             dataType: 'json',

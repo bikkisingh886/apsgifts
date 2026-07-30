@@ -110,6 +110,9 @@
                                                 <tr>
                                                     <td class="small">
                                                         <?= esc($item['name']) ?>
+                                                        <?php if (!empty($item['color'])): ?>
+                                                            <div class="text-muted small">Color: <?= esc($item['color']) ?></div>
+                                                        <?php endif; ?>
                                                         <?php if (!empty($item['delivery_date'])): ?>
                                                             <div class="text-success small fw-bold mt-1">
                                                                 <i class="far fa-calendar-alt me-1"></i> Delivery: <?= date('d M Y', strtotime($item['delivery_date'])) ?>

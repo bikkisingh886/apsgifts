@@ -87,7 +87,12 @@
                                                 <td>
                                                     <div class="d-flex align-items-center">
                                                         <img src="<?= base_url($item['image_path'] ?: 'assets/img/product/default.png') ?>" alt="" style="width: 50px; height: 50px; object-fit: cover; margin-right: 15px;" class="rounded">
-                                                        <span><?= esc($item['product_name']) ?></span>
+                                                        <div>
+                                                            <span class="d-block fw-bold"><?= esc($item['product_name']) ?></span>
+                                                            <?php if (!empty($item['color'])): ?>
+                                                                <span class="badge bg-secondary text-white small" style="background-color: #6c757d !important; font-size: 0.72rem;">Color: <?= esc($item['color']) ?></span>
+                                                            <?php endif; ?>
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td><?= esc($item['sku']) ?></td>

@@ -30,9 +30,43 @@ class ProductModel extends Model
 
         $products = $builder->get()->getResultArray();
 
-        // Attach category names to each product
+        // Load all active categories to construct name paths in memory
+        $categoriesList = $db->table('categories')->get()->getResultArray();
+        $categoriesMap = [];
+        foreach ($categoriesList as $cat) {
+            $categoriesMap[$cat['id']] = $cat;
+        }
+
+        $categoryPathsMap = [];
+        foreach ($categoriesList as $cat) {
+            $namePath = [$cat['name']];
+            $currParentId = $cat['parent_id'];
+            while ($currParentId && isset($categoriesMap[$currParentId])) {
+                $parent = $categoriesMap[$currParentId];
+                array_unshift($namePath, $parent['name']);
+                $currParentId = $parent['parent_id'];
+            }
+            $categoryPathsMap[$cat['id']] = implode(' > ', $namePath);
+        }
+
+        // Attach category names and full paths to each product
         foreach ($products as &$product) {
-            $product['categories'] = $this->getProductCategories($product['id']);
+            $mappings = $db->table('product_categories')
+                ->where('product_id', $product['id'])
+                ->get()
+                ->getResultArray();
+
+            $product['categories'] = [];
+            foreach ($mappings as $map) {
+                $catId = $map['category_id'];
+                if (isset($categoryPathsMap[$catId])) {
+                    $product['categories'][] = [
+                        'id'        => $catId,
+                        'name'      => $categoriesMap[$catId]['name'],
+                        'full_path' => $categoryPathsMap[$catId]
+                    ];
+                }
+            }
         }
 
         return $products;
@@ -88,6 +122,15 @@ class ProductModel extends Model
             $product['images'] = $this->getProductImages((int)$product['id']);
             $product['categories'] = $this->getProductCategories((int)$product['id']);
             
+            // Get associated colors list
+            $product['colors'] = $db->table('product_colors pc')
+                ->select('c.id, c.name, c.color_code')
+                ->join('colors c', 'c.id = pc.color_id')
+                ->where('pc.product_id', (int)$product['id'])
+                ->where('c.is_active', 1)
+                ->get()
+                ->getResultArray();
+            
             // Get combo items
             $product['combo_items'] = [];
             if ($product['product_type'] === 'combo') {
@@ -121,6 +164,15 @@ class ProductModel extends Model
         if ($product) {
             $product['images'] = $this->getProductImages($id);
             
+            // Get associated colors list
+            $product['colors'] = $db->table('product_colors pc')
+                ->select('c.id, c.name, c.color_code')
+                ->join('colors c', 'c.id = pc.color_id')
+                ->where('pc.product_id', $id)
+                ->where('c.is_active', 1)
+                ->get()
+                ->getResultArray();
+            
             // Get category IDs
             $catQuery = $db->table('product_categories')
                 ->select('category_id')
@@ -128,6 +180,14 @@ class ProductModel extends Model
                 ->get()
                 ->getResultArray();
             $product['category_ids'] = array_column($catQuery, 'category_id');
+
+            // Get color IDs
+            $colQuery = $db->table('product_colors')
+                ->select('color_id')
+                ->where('product_id', $id)
+                ->get()
+                ->getResultArray();
+            $product['color_ids'] = array_column($colQuery, 'color_id');
 
             // Get city mappings
             $cityQuery = $db->table('product_cities')
@@ -237,14 +297,33 @@ class ProductModel extends Model
     /**
      * Save product (Admin).
      */
-    public function insertProduct(array $product_data, array $category_ids, array $uploaded_images = [], array $city_mappings = [], array $combo_items = [])
+    public function insertProduct(array $product_data, array $category_ids, array $uploaded_images = [], array $city_mappings = [], array $combo_items = [], array $color_ids = [])
     {
         $db = \Config\Database::connect();
         $db->transStart();
 
+        // 0. Update color names list in base products table
+        if (!empty($color_ids)) {
+            $colors_list = $db->table('colors')->whereIn('id', $color_ids)->get()->getResultArray();
+            $color_names = array_column($colors_list, 'name');
+            $product_data['color'] = implode(', ', $color_names);
+        } else {
+            $product_data['color'] = null;
+        }
+
         // 1. Insert product
         $db->table('products')->insert($product_data);
         $productId = $db->insertID();
+
+        // 1.5. Insert product colors
+        if (!empty($color_ids)) {
+            foreach ($color_ids as $colorId) {
+                $db->table('product_colors')->insert([
+                    'product_id' => $productId,
+                    'color_id'   => $colorId
+                ]);
+            }
+        }
 
         // 2. Insert category links
         if (!empty($category_ids)) {
@@ -303,13 +382,33 @@ class ProductModel extends Model
     /**
      * Update product (Admin).
      */
-    public function updateProduct(int $id, array $product_data, array $category_ids, array $new_images = [], array $existing_to_delete = [], array $city_mappings = [], array $combo_items = [], array $existing_image_alts = [])
+    public function updateProduct(int $id, array $product_data, array $category_ids, array $new_images = [], array $existing_to_delete = [], array $city_mappings = [], array $combo_items = [], array $existing_image_alts = [], array $color_ids = [])
     {
         $db = \Config\Database::connect();
         $db->transStart();
 
+        // 0. Update color names list in base products table
+        if (!empty($color_ids)) {
+            $colors_list = $db->table('colors')->whereIn('id', $color_ids)->get()->getResultArray();
+            $color_names = array_column($colors_list, 'name');
+            $product_data['color'] = implode(', ', $color_names);
+        } else {
+            $product_data['color'] = null;
+        }
+
         // 1. Update product base data
         $db->table('products')->where('id', $id)->update($product_data);
+
+        // 1.5. Refresh color links
+        $db->table('product_colors')->where('product_id', $id)->delete();
+        if (!empty($color_ids)) {
+            foreach ($color_ids as $colorId) {
+                $db->table('product_colors')->insert([
+                    'product_id' => $id,
+                    'color_id'   => $colorId
+                ]);
+            }
+        }
 
         // 2. Refresh categories
         $db->table('product_categories')->where('product_id', $id)->delete();
@@ -549,22 +648,28 @@ class ProductModel extends Model
     /**
      * Get paginated products for category
      */
-    public function getCategoryProductsPaginated(string $category_slug, string $search = '', string $min_price = '', string $max_price = '', int $perPage = 9, string $sort = '', array $colors = [])
+    public function getCategoryProductsPaginated($categoryIds, string $search = '', string $min_price = '', string $max_price = '', int $perPage = 9, string $sort = '', array $colors = [])
     {
+        if (!is_array($categoryIds)) {
+            $categoryIds = [$categoryIds];
+        }
+        $categoryIds = array_filter(array_map('intval', $categoryIds));
+
         $cityId = session('selected_city_id');
 
         $this->select('products.id, products.name, products.slug, products.sku, products.description, products.short_description, products.delivery_type, products.offer_id, products.meta_title, products.meta_desc, products.is_active, products.created_at, products.product_type, products.color, o.name as offer_name, o.type as offer_type, o.value as offer_value, pi.image_path')
-             ->join('product_categories pc', 'pc.product_id = products.id')
-             ->join('categories c', 'c.id = pc.category_id')
              ->join('offers o', 'o.id = products.offer_id AND o.is_active = 1', 'left')
              ->join('product_images pi', 'pi.product_id = products.id AND pi.is_primary = 1', 'left')
-             ->groupStart()
-                 ->where('c.slug', $category_slug)
-                 ->orWhere('c.parent_id IN (SELECT id FROM categories WHERE slug = ' . $this->db->escape($category_slug) . ')')
-             ->groupEnd()
              ->where('products.is_active', 1)
              ->where('products.hide_from_frontend', 0)
              ->groupBy('products.id');
+
+        if (!empty($categoryIds)) {
+            $this->join("product_categories pc_single", "pc_single.product_id = products.id")
+                 ->whereIn("pc_single.category_id", $categoryIds);
+        } else {
+            $this->where('1 = 0');
+        }
 
         if ($cityId) {
             $this->select('COALESCE(pc_city.price_override, products.price) as price')

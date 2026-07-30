@@ -21,7 +21,7 @@ $menuModel = new \App\Models\MenuModel();
 $menuItemModel = new \App\Models\MenuItemModel();
 $frontendMenu = cache()->get('frontend_main_menu');
 if (!$frontendMenu) {
-    $menu = $menuModel->where('slug', 'main-menu')->first();
+    $menu = $menuModel->where('is_active', 1)->first() ?? $menuModel->where('slug', 'main-menu')->first();
     if ($menu) {
         $items = $menuItemModel->where('menu_id', $menu['id'])->orderBy('sort_order', 'ASC')->findAll();
         
@@ -59,11 +59,14 @@ if (!$frontendMenu) {
     <meta name="description" content="<?= esc($meta_desc ?? '') ?>">
     <meta name="keywords" content="gifts, cake, flowers, online delivery">
 
+    <!-- Canonical URL -->
+    <link rel="canonical" href="<?= esc(get_clean_canonical_url($canonical_url ?? null)) ?>">
+
     <!-- Open Graph / Facebook SEO Tags -->
     <meta property="og:type" content="<?= esc($og_type ?? 'website') ?>">
     <meta property="og:title" content="<?= esc($og_title ?? $meta_title ?? get_setting('company_name', 'OyeGifts')) ?>">
     <meta property="og:description" content="<?= esc($og_desc ?? $meta_desc ?? '') ?>">
-    <meta property="og:url" content="<?= current_url() ?>">
+    <meta property="og:url" content="<?= esc(get_clean_canonical_url($og_url ?? $canonical_url ?? null)) ?>">
     <?php if (!empty($og_image)): ?>
         <meta property="og:image" content="<?= base_url(esc($og_image)) ?>">
     <?php elseif ($logo = get_setting('company_logo')): ?>
@@ -94,7 +97,13 @@ if (!$frontendMenu) {
     <?php endif; ?>
 
     <!-- favicon -->
-    <link rel="icon" type="image/x-icon" href="<?= base_url('assets/img/logo/favicon.png') ?>">
+    <?php if ($fav = get_setting('company_favicon')): ?>
+        <link rel="icon" type="image/x-icon" href="<?= base_url(esc($fav)) ?>">
+        <link rel="shortcut icon" type="image/x-icon" href="<?= base_url(esc($fav)) ?>">
+    <?php else: ?>
+        <link rel="icon" type="image/x-icon" href="<?= base_url('assets/img/logo/favicon.png') ?>">
+        <link rel="shortcut icon" type="image/x-icon" href="<?= base_url('assets/img/logo/favicon.png') ?>">
+    <?php endif; ?>
 
     <!-- css -->
     <link rel="stylesheet" href="<?= base_url('assets/css/bootstrap.min.css') ?>">
@@ -1062,11 +1071,13 @@ if (!$frontendMenu) {
                         <div class="footer-widget-box list">
                             <h4 class="footer-widget-title">Quick Links</h4>
                             <ul class="footer-list">
-                                <li><a href="<?= base_url('about') ?>">About Us</a></li>
-                                <li><a href="<?= base_url('contact') ?>">Contact Us</a></li>
+                                <li><a href="<?= base_url('about-us') ?>">About Us</a></li>
+                                <li><a href="<?= base_url('contact-us') ?>">Contact Us</a></li>
+                                <li><a href="<?= base_url('privacy-policy') ?>">Privacy Policy</a></li>
+                                <li><a href="<?= base_url('terms-of-service') ?>">Terms of Service</a></li>
+                                <li><a href="<?= base_url('cancellation-policy') ?>">Cancellation Policy</a></li>
+                                <li><a href="<?= base_url('shipping-policy') ?>">Shipping Policy</a></li>
                                 <li><a href="<?= base_url('faq') ?>">FAQ</a></li>
-                                <li><a href="<?= base_url('terms') ?>">Terms of Service</a></li>
-                                <li><a href="<?= base_url('privacy') ?>">Privacy Policy</a></li>
                             </ul>
                         </div>
                     </div>

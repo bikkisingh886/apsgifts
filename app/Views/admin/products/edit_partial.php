@@ -33,8 +33,15 @@
                     <input type="number" name="price" step="0.01" class="form-control" value="<?= esc($product['price']) ?>" required>
                 </div>
                 <div class="col-md-3 mb-3">
-                    <label class="form-label">Product Color</label>
-                    <input type="text" name="color" class="form-control" value="<?= esc($product['color'] ?? '') ?>" placeholder="e.g. Red, Black, Pink">
+                    <label class="form-label">Product Colors</label>
+                    <select name="color_ids[]" class="form-select select2-colors-multiple-modal" multiple="multiple">
+                        <?php 
+                        $selectedColors = $product['color_ids'] ?? [];
+                        foreach ($colors as $col): 
+                        ?>
+                            <option value="<?= $col['id'] ?>" <?= in_array($col['id'], $selectedColors) ? 'selected' : '' ?>><?= esc($col['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
             </div>
 
@@ -50,7 +57,7 @@
 
             <div class="mb-3">
                 <label class="form-label">Short Description</label>
-                <textarea name="short_description" class="form-control" rows="3" placeholder="Brief summary of the product (shows next to price)..."><?= esc($product['short_description'] ?? '') ?></textarea>
+                <textarea name="short_description" id="short-description-editor" class="form-control" rows="3" placeholder="Brief summary of the product (shows next to price)..."><?= esc($product['short_description'] ?? '') ?></textarea>
             </div>
 
             <div class="mb-3">
@@ -152,9 +159,12 @@
                 </div>
                 <div style="max-height: 120px; overflow-y: auto;" class="border rounded p-2 bg-light" id="modal-categories-list-container">
                     <?php foreach ($categories as $cat): ?>
-                        <div class="form-check mb-1 category-item-row" data-id="<?= $cat['id'] ?>" data-name="<?= esc(strtolower($cat['name'])) ?>">
+                        <div class="form-check mb-1 category-item-row" data-id="<?= $cat['id'] ?>" data-name="<?= esc(strtolower($cat['name'])) ?>" style="margin-left: <?= ($cat['depth'] ?? 0) * 24 ?>px;">
                             <input class="form-check-input" type="checkbox" name="category_ids[]" value="<?= $cat['id'] ?>" id="modal_cat_<?= $cat['id'] ?>" <?= in_array($cat['id'], $product['category_ids'] ?? []) ? 'checked' : '' ?>>
-                            <label class="form-check-label text-dark small" for="modal_cat_<?= $cat['id'] ?>">
+                            <label class="form-check-label text-dark small" for="modal_cat_<?= $cat['id'] ?>" style="cursor: pointer;">
+                                <?php if (($cat['depth'] ?? 0) > 0): ?>
+                                    <span class="text-muted"><?= str_repeat('—', $cat['depth']) ?></span> 
+                                <?php endif; ?>
                                 <?= esc($cat['name']) ?>
                             </label>
                         </div>
@@ -338,6 +348,9 @@
 
 <script>
 (function() {
+    // Initialize Select2 colors multiple for modal
+    $('.select2-colors-multiple-modal').select2({ placeholder: "Choose colors...", allowClear: true, dropdownParent: $('#editModal') });
+
     const PRODUCT_EDIT_ID = <?= (int)$product['id'] ?>;
 
     // 1. Auto-Slug Generation Logic in Modal + Real-time Duplicate Check

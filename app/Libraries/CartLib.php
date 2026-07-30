@@ -16,7 +16,7 @@ class CartLib
     /**
      * Add product to cart.
      */
-    public function add(int $productId, int $qty, string $deliveryDate = null, string $customizationText = null, string $customizationImage = null): bool
+    public function add(int $productId, int $qty, string $deliveryDate = null, string $customizationText = null, string $customizationImage = null, string $color = null): bool
     {
         if ($qty < 1) {
             return false;
@@ -49,14 +49,21 @@ class CartLib
 
         $cart = $this->session->get('cart') ?: [];
 
-        if (isset($cart[$productId])) {
-            $cart[$productId]['qty'] += $qty;
-            $cart[$productId]['delivery_date'] = $deliveryDate;
-            if ($customizationText) $cart[$productId]['customization_text'] = $customizationText;
-            if ($customizationImage) $cart[$productId]['customization_image'] = $customizationImage;
+        $itemKey = (string)$productId;
+        if (!empty($color)) {
+            $itemKey .= '_' . strtolower(str_replace(' ', '-', $color));
+        }
+
+        if (isset($cart[$itemKey])) {
+            $cart[$itemKey]['qty'] += $qty;
+            $cart[$itemKey]['delivery_date'] = $deliveryDate;
+            if ($customizationText) $cart[$itemKey]['customization_text'] = $customizationText;
+            if ($customizationImage) $cart[$itemKey]['customization_image'] = $customizationImage;
+            if ($color) $cart[$itemKey]['color'] = $color;
         } else {
-            $cart[$productId] = [
-                'id'                  => $productId,
+            $cart[$itemKey] = [
+                'id'                  => $itemKey,
+                'product_id'          => $productId,
                 'name'                => $product['name'],
                 'sku'                 => $product['sku'],
                 'price'               => $price,
@@ -65,7 +72,10 @@ class CartLib
                 'delivery_type'       => $product['delivery_type'],
                 'delivery_date'       => $deliveryDate,
                 'customization_text'  => $customizationText,
-                'customization_image' => $customizationImage
+                'customization_image' => $customizationImage,
+                'is_customizable'     => $product['is_customizable'] ?? 0,
+                'customization_type'  => $product['customization_type'] ?? null,
+                'color'               => $color
             ];
         }
 
@@ -76,15 +86,15 @@ class CartLib
     /**
      * Update cart quantities.
      */
-    public function update(int $productId, int $qty): bool
+    public function update(string $id, int $qty): bool
     {
         $cart = $this->session->get('cart') ?: [];
 
-        if (isset($cart[$productId])) {
+        if (isset($cart[$id])) {
             if ($qty <= 0) {
-                unset($cart[$productId]);
+                unset($cart[$id]);
             } else {
-                $cart[$productId]['qty'] = $qty;
+                $cart[$id]['qty'] = $qty;
             }
             $this->session->set('cart', $cart);
             return true;
@@ -96,12 +106,12 @@ class CartLib
     /**
      * Remove item from cart.
      */
-    public function remove(int $productId): bool
+    public function remove(string $id): bool
     {
         $cart = $this->session->get('cart') ?: [];
 
-        if (isset($cart[$productId])) {
-            unset($cart[$productId]);
+        if (isset($cart[$id])) {
+            unset($cart[$id]);
             $this->session->set('cart', $cart);
             return true;
         }

@@ -158,7 +158,24 @@
                                     </div>
                                 <?php endif; ?>
 
-
+                                <!-- Color Selector -->
+                                <?php if (!empty($product['colors'])): ?>
+                                    <div class="shop-single-color-wrap mb-4 p-3 border rounded bg-white" style="border-radius: 12px; margin-top: 20px;">
+                                        <h6 class="mb-3 fw-bold text-dark"><i class="far fa-palette me-2 text-primary"></i> Select Color:</h6>
+                                        <div class="d-flex gap-3 align-items-center flex-wrap">
+                                            <?php foreach ($product['colors'] as $idx => $col): ?>
+                                                <button type="button" class="color-swatch-btn btn rounded-circle d-flex align-items-center justify-content-center <?= $idx === 0 ? 'active' : '' ?>" 
+                                                        data-color-name="<?= esc($col['name']) ?>" 
+                                                        style="width: 38px; height: 38px; padding: 0; border: 2px solid <?= $idx === 0 ? '#e76f51' : '#ddd' ?>; background-color: <?= esc($col['color_code'] ?: '#fff') ?>; box-shadow: <?= $idx === 0 ? '0 0 0 2px rgba(231, 111, 81, 0.2)' : 'none' ?>; transition: all 0.2s;"
+                                                        title="<?= esc($col['name']) ?>">
+                                                    <span class="swatch-check" style="display: <?= $idx === 0 ? 'inline-block' : 'none' ?>; color: <?= (strtolower($col['color_code']) === '#ffffff' || strtolower($col['color_code']) === '#fff') ? '#333' : '#fff' ?>; font-size: 0.85rem;"><i class="fas fa-check"></i></span>
+                                                </button>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <input type="hidden" name="color" id="selected-product-color" value="<?= esc($product['colors'][0]['name']) ?>">
+                                        <div class="mt-2 text-muted small">Selected: <strong class="text-dark" id="selected-color-name"><?= esc($product['colors'][0]['name']) ?></strong></div>
+                                    </div>
+                                <?php endif; ?>
 
                                 <!-- Quantity Selector -->
                                 <div class="shop-single-qty-wrap my-3">
@@ -823,6 +840,27 @@
                     $('#delivery_date_hidden').val('<?= date('Y-m-d', strtotime('+1 day')) ?>');
                     $('#schedule-pill-text').text('Schedule Date');
                 }
+            });
+
+            // Color Swatch Selection Handler
+            $(document).on('click', '.color-swatch-btn', function() {
+                $('.color-swatch-btn').css({
+                    'border-color': '#ddd',
+                    'box-shadow': 'none'
+                }).removeClass('active');
+                
+                $('.color-swatch-btn').find('.swatch-check').hide();
+
+                $(this).css({
+                    'border-color': '#e76f51',
+                    'box-shadow': '0 0 0 2px rgba(231, 111, 81, 0.2)'
+                }).addClass('active');
+                
+                $(this).find('.swatch-check').show();
+
+                const colorName = $(this).attr('data-color-name');
+                $('#selected-product-color').val(colorName);
+                $('#selected-color-name').text(colorName);
             });
         });
     </script>

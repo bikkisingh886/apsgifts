@@ -8,7 +8,13 @@
 
     
     <!-- favicon -->
-    <link rel="icon" type="image/x-icon" href="<?= base_url('assets/img/logo/favicon.png') ?>">
+    <?php if ($fav = get_setting('company_favicon')): ?>
+        <link rel="icon" type="image/x-icon" href="<?= base_url(esc($fav)) ?>">
+        <link rel="shortcut icon" type="image/x-icon" href="<?= base_url(esc($fav)) ?>">
+    <?php else: ?>
+        <link rel="icon" type="image/x-icon" href="<?= base_url('assets/img/logo/favicon.png') ?>">
+        <link rel="shortcut icon" type="image/x-icon" href="<?= base_url('assets/img/logo/favicon.png') ?>">
+    <?php endif; ?>
     
     <!-- bootstrap and icons -->
     <link rel="stylesheet" href="<?= base_url('assets/css/bootstrap.min.css') ?>">
@@ -20,6 +26,33 @@
     
     <!-- Premium light blueprint theme styles -->
     <style>
+        /* CKEditor Custom Enhancements */
+        .cke_chrome {
+            border-radius: 8px !important;
+            border: 1px solid var(--border-color, #eaedf1) !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03) !important;
+            overflow: hidden !important;
+        }
+        .cke_top {
+            background: #f8f9fa !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+            padding: 8px !important;
+        }
+        .cke_source {
+            font-family: 'Courier New', Consolas, Monaco, monospace !important;
+            font-size: 13px !important;
+            background-color: #1e1e1e !important;
+            color: #4ec9b0 !important;
+            padding: 12px !important;
+        }
+        .cke_button__source_label {
+            display: inline-block !important;
+            font-weight: 700 !important;
+            color: #0d6efd !important;
+        }
+        .cke_notification, .cke_notification_warning {
+            display: none !important;
+        }
         /* Select2 Theme Custom Styling overrides */
         .select2-container {
             width: 100% !important;
@@ -219,6 +252,33 @@
 
         .sidebar-menu li.active a i {
             color: var(--primary-coral);
+        }
+
+        /* Submenu sidebar styling */
+        .sidebar-menu .collapse li a {
+            padding: 8px 12px 8px 40px !important;
+            font-size: 0.88rem !important;
+            font-weight: 500;
+            border-left: none !important;
+            background-color: transparent !important;
+        }
+        .sidebar-menu .collapse li.active a {
+            color: var(--primary-coral) !important;
+            font-weight: 600;
+        }
+        .sidebar-menu li a.dropdown-toggle::after {
+            display: inline-block;
+            margin-left: auto;
+            vertical-align: 0.255em;
+            content: "";
+            border-top: 0.3em solid;
+            border-right: 0.3em solid transparent;
+            border-bottom: 0;
+            border-left: 0.3em solid transparent;
+            transition: transform 0.2s ease;
+        }
+        .sidebar-menu li a.dropdown-toggle:not(.collapsed)::after {
+            transform: rotate(180deg);
         }
 
         /* Content Wrapper Styling */
@@ -509,8 +569,20 @@
                 <a href="<?= base_url('admin/dashboard') ?>"><i class="far fa-chart-line"></i> Dashboard</a>
             </li>
             <?php if ($authLib->hasPermission('products', 'view')): ?>
-            <li class="<?= (url_is('admin/products*')) ? 'active' : '' ?>">
-                <a href="<?= base_url('admin/products') ?>"><i class="far fa-box-open"></i> Products</a>
+            <li class="<?= (url_is('admin/products*') || url_is('admin/colors*')) ? 'active' : '' ?>">
+                <a href="#productsSubmenu" data-bs-toggle="collapse" role="button" aria-expanded="<?= (url_is('admin/products*') || url_is('admin/colors*')) ? 'true' : 'false' ?>" aria-controls="productsSubmenu" class="dropdown-toggle <?= (url_is('admin/products*') || url_is('admin/colors*')) ? '' : 'collapsed' ?>">
+                    <i class="far fa-box-open"></i> Products
+                </a>
+                <ul class="collapse list-unstyled <?= (url_is('admin/products*') || url_is('admin/colors*')) ? 'show' : '' ?>" id="productsSubmenu">
+                    <li class="<?= (url_is('admin/products*') && !url_is('admin/products/create')) ? 'active' : '' ?>">
+                        <a href="<?= base_url('admin/products') ?>"><i class="far fa-list-ol"></i> Products List</a>
+                    </li>
+                    <?php if ($authLib->hasPermission('colors', 'view')): ?>
+                    <li class="<?= (url_is('admin/colors*')) ? 'active' : '' ?>">
+                        <a href="<?= base_url('admin/colors') ?>"><i class="far fa-palette"></i> Product Colors</a>
+                    </li>
+                    <?php endif; ?>
+                </ul>
             </li>
             <?php endif; ?>
             <?php if ($authLib->hasPermission('categories', 'view')): ?>
@@ -558,6 +630,21 @@
                 <a href="<?= base_url('admin/reviews') ?>"><i class="far fa-comments"></i> Product Reviews</a>
             </li>
             <?php endif; ?>
+            <li class="<?= (url_is('admin/faqs*')) ? 'active' : '' ?>">
+                <a href="<?= base_url('admin/faqs') ?>"><i class="far fa-question-circle"></i> FAQ Manager</a>
+            </li>
+            <li class="<?= (url_is('admin/enquiries*')) ? 'active' : '' ?>">
+                <a href="<?= base_url('admin/enquiries') ?>" class="d-flex justify-content-between align-items-center">
+                    <span><i class="far fa-envelope-open-text me-2"></i> Enquiries</span>
+                    <?php
+                        $enqModel = new \App\Models\EnquiryModel();
+                        $unreadEnq = $enqModel->where('status', 'unread')->countAllResults();
+                        if ($unreadEnq > 0):
+                    ?>
+                        <span class="badge bg-danger rounded-pill px-2" style="font-size: 0.75rem;"><?= $unreadEnq ?></span>
+                    <?php endif; ?>
+                </a>
+            </li>
             <?php if ($authLib->hasPermission('seo_pages', 'view')): ?>
             <li class="<?= (url_is('admin/seo-pages*')) ? 'active' : '' ?>">
                 <a href="<?= base_url('admin/seo-pages') ?>"><i class="far fa-search"></i> SEO Pages</a>
@@ -606,8 +693,8 @@
     </div>
 
 
-    <!-- Generic Edit Modal -->
-    <div class="modal fade text-dark" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <!-- Generic Edit Modal (No tabindex="-1" so CKEditor dialog inputs receive focus naturally) -->
+    <div class="modal fade text-dark" id="editModal" aria-labelledby="editModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-dark text-white">
@@ -626,8 +713,69 @@
 
     <!-- javascript -->
     <script src="<?= base_url('assets/js/bootstrap.bundle.min.js') ?>"></script>
-    <!-- CKEditor CDN -->
-    <script src="https://cdn.ckeditor.com/ckeditor5/36.0.1/classic/ckeditor.js"></script>
+    <!-- CKEditor 4 Full Build CDN (native Source HTML code editor + full rich editing) -->
+    <script src="https://cdn.ckeditor.com/4.22.1/full/ckeditor.js"></script>
+    <script>
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal && bootstrap.Modal.Default) {
+            bootstrap.Modal.Default.focus = false;
+        }
+        if (typeof CKEDITOR !== 'undefined') {
+            CKEDITOR.config.versionCheck = false;
+        }
+
+        // Helper function to initialize CKEditor with full features and native Source code button
+        function initAppCKEditor(target) {
+            var el = (typeof target === 'string') ? document.querySelector(target) : target;
+            if (!el) return Promise.resolve(null);
+            
+            var id = el.id;
+            if (!id) {
+                id = 'editor_' + Math.random().toString(36).substring(2, 9);
+                el.id = id;
+            }
+
+            if (typeof CKEDITOR !== 'undefined' && CKEDITOR.replace) {
+                CKEDITOR.config.versionCheck = false;
+                if (CKEDITOR.instances[id]) {
+                    try { CKEDITOR.instances[id].destroy(true); } catch(e){}
+                }
+
+                var instance = CKEDITOR.replace(id, {
+                    height: 320,
+                    versionCheck: false,
+                    allowedContent: true, // Preserve all HTML tags, styles, and attributes
+                    extraAllowedContent: '*(*);*{*}',
+                    toolbar: [
+                        { name: 'document', items: [ 'Source', '-', 'Maximize', 'ShowBlocks', 'Preview', 'Print' ] },
+                        { name: 'clipboard', items: [ 'Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo' ] },
+                        { name: 'editing', items: [ 'Find', 'Replace', '-', 'SelectAll' ] },
+                        '/',
+                        { name: 'basicstyles', items: [ 'Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'RemoveFormat' ] },
+                        { name: 'paragraph', items: [ 'NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote', 'CreateDiv', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock' ] },
+                        { name: 'links', items: [ 'Link', 'Unlink', 'Anchor' ] },
+                        { name: 'insert', items: [ 'Image', 'Table', 'HorizontalRule', 'Smiley', 'SpecialChar', 'Iframe' ] },
+                        '/',
+                        { name: 'styles', items: [ 'Styles', 'Format', 'Font', 'FontSize' ] },
+                        { name: 'colors', items: [ 'TextColor', 'BGColor' ] }
+                    ]
+                });
+
+                return Promise.resolve(instance);
+            }
+            return Promise.reject('CKEDITOR script not loaded');
+        }
+
+        // Global form submit hook to sync all CKEditor instances with underlying textareas
+        document.addEventListener('submit', function(e) {
+            if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances) {
+                for (var key in CKEDITOR.instances) {
+                    if (CKEDITOR.instances.hasOwnProperty(key)) {
+                        CKEDITOR.instances[key].updateElement();
+                    }
+                }
+            }
+        }, true);
+    </script>
     <!-- SweetAlert2 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- DataTables JS & Extensions -->
@@ -661,20 +809,23 @@
             
             // Clear modal body and show loading spinner
             $('#editModalBody').html('<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading form...</p></div>');
-            $('#editModal').modal('show');
+            var editModalEl = document.getElementById('editModal');
+            if (editModalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                bootstrap.Modal.getOrCreateInstance(editModalEl, { focus: false }).show();
+            } else {
+                $('#editModal').modal({ focus: false });
+            }
             window.popupEditor = null;
             
             // Load the form via AJAX
             $.get(editUrl, function(html) {
                 $('#editModalBody').html(html);
                 
-                // Re-initialize CKEditor on description field if loaded in modal
-                var editorEl = document.querySelector('#editModalBody #description-editor');
-                if (editorEl) {
-                    ClassicEditor.create(editorEl).then(newEditor => {
-                        window.popupEditor = newEditor;
-                    }).catch(err => console.error(err));
-                }
+                // Re-initialize CKEditor on description, short description, and summary fields if loaded in modal
+                var modalEditors = document.querySelectorAll('#editModalBody #description-editor, #editModalBody #short-description-editor, #editModalBody #summary-editor, #editModalBody textarea.rich-editor');
+                modalEditors.forEach(function(el) {
+                    initAppCKEditor(el);
+                });
             }).fail(function() {
                 $('#editModalBody').html('<div class="alert alert-danger">Failed to load the form. Please try again.</div>');
             });
@@ -686,9 +837,13 @@
             var form = $(this);
             var actionUrl = form.attr('action');
             
-            // If CKEditor is active, synchronize it
-            if (window.popupEditor) {
-                window.popupEditor.updateSourceElement();
+            // Synchronize all CKEditor instances with their textareas before AJAX send
+            if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances) {
+                for (var key in CKEDITOR.instances) {
+                    if (CKEDITOR.instances.hasOwnProperty(key)) {
+                        CKEDITOR.instances[key].updateElement();
+                    }
+                }
             }
             
             // Handle form data including uploads

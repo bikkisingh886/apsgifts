@@ -101,6 +101,9 @@
                                 <td>
                                     <span class="text-white fw-bold"><?= esc($item['product_name']) ?></span><br>
                                     <small class="text-muted">SKU: <?= esc($item['sku'] ?? 'N/A') ?></small>
+                                    <?php if (!empty($item['color'])): ?>
+                                        <br><small class="badge bg-secondary text-white" style="background-color: #6c757d !important; font-size: 0.72rem; padding: 3px 6px;">Color: <?= esc($item['color']) ?></small>
+                                    <?php endif; ?>
                                     <?php 
                                     $cust = json_decode($item['customization_data'] ?? '{}', true);
                                     if (!empty($cust['text']) || !empty($cust['image'])): 

@@ -1,6 +1,23 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    # Redirect /index.php/page to /page
+    RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /index\.php/(.*)\ HTTP/ [NC]
+    RewriteRule ^index\.php/(.*)$ https://www.apsgifts.com/$1 [R=301,L]
+
+    RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /index\.php\ HTTP/ [NC]
+    RewriteRule ^index\.php$ https://www.apsgifts.com/ [R=301,L]
+
+    # Force HTTPS for non-localhost
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP_HOST} !^localhost [NC]
+    RewriteCond %{HTTP_HOST} !^127\.0\.0\.1 [NC]
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Force www for production domain (apsgifts.com -> www.apsgifts.com)
+    RewriteCond %{HTTP_HOST} ^apsgifts\.com$ [NC]
+    RewriteRule ^ https://www.apsgifts.com%{REQUEST_URI} [L,R=301]
+
     # Block access to sensitive files
     RewriteCond %{REQUEST_URI} ^/\.env [NC,OR]
     RewriteCond %{REQUEST_URI} ^/composer\.(json|lock) [NC,OR]
@@ -11,3 +28,4 @@
 
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
+

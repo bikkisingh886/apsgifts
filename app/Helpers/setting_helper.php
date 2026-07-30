@@ -81,3 +81,61 @@ if (!function_exists('get_category_url')) {
     }
 }
 
+if (!function_exists('get_clean_canonical_url')) {
+    /**
+     * Get clean Canonical / OG URL without index.php,
+     * enforcing https://www.apsgifts.com for live domain.
+     */
+    function get_clean_canonical_url(?string $custom_url = null): string {
+        if (!empty($custom_url)) {
+            $url = $custom_url;
+        } else {
+            $request = \Config\Services::request();
+            $path = ltrim($request->getPath(), '/');
+            $url = base_url($path);
+        }
+
+        // 1. Remove index.php from URL
+        $url = str_replace(['/index.php/', '/index.php', 'index.php/'], ['/', '', ''], $url);
+
+        // 2. Parse URL components
+        $parts = parse_url($url);
+        if (!$parts || empty($parts['host'])) {
+            return $url;
+        }
+
+        $host = $parts['host'];
+        $scheme = $parts['scheme'] ?? 'https';
+
+        // Check if running on local development environment
+        $is_local = (
+            $host === 'localhost' || 
+            $host === '127.0.0.1' || 
+            filter_var($host, FILTER_VALIDATE_IP) !== false ||
+            str_contains($host, '.local')
+        );
+
+        if (!$is_local) {
+            $scheme = 'https';
+            if ($host === 'apsgifts.com' || $host === 'www.apsgifts.com') {
+                $host = 'www.apsgifts.com';
+            } elseif (!str_starts_with($host, 'www.')) {
+                $host = 'www.' . $host;
+            }
+        }
+
+        $path = $parts['path'] ?? '/';
+        $query = isset($parts['query']) ? '?' . $parts['query'] : '';
+
+        // Prevent double slashes or trailing slash on non-root paths
+        if ($path !== '/' && str_ends_with($path, '/')) {
+            $path = rtrim($path, '/');
+        }
+
+        $port = isset($parts['port']) ? ':' . $parts['port'] : '';
+
+        return "{$scheme}://{$host}{$port}" . ($path[0] === '/' ? $path : '/' . $path) . $query;
+    }
+}
+
+

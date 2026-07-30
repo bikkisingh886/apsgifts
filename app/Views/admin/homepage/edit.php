@@ -857,18 +857,13 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 </script>
-<script src="https://cdn.ckeditor.com/ckeditor5/36.0.1/classic/ckeditor.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const editorEl = document.querySelector('#editor');
     if (editorEl) {
-        ClassicEditor
-            .create(editorEl, {
-                toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', '|', 'undo', 'redo']
-            })
-            .catch(error => {
-                console.error(error);
-            });
+        initAppCKEditor(editorEl).catch(error => {
+            console.error(error);
+        });
     }
 });
 </script>

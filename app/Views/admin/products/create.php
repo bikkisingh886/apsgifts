@@ -40,8 +40,12 @@
                                 <input type="number" name="price" step="0.01" class="form-control" placeholder="Original Price" required>
                             </div>
                             <div class="col-md-3 mb-3">
-                                <label class="form-label">Product Color</label>
-                                <input type="text" name="color" class="form-control" placeholder="e.g. Red, Black, Pink">
+                                <label class="form-label">Product Colors</label>
+                                <select name="color_ids[]" class="form-select select2-colors-multiple" multiple="multiple">
+                                    <?php foreach ($colors as $col): ?>
+                                        <option value="<?= $col['id'] ?>"><?= esc($col['name']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
                         </div>
 
@@ -57,7 +61,7 @@
 
                         <div class="mb-3">
                             <label class="form-label">Short Description</label>
-                            <textarea name="short_description" class="form-control" rows="3" placeholder="Brief summary of the product (shows next to price)..."></textarea>
+                            <textarea name="short_description" id="short_description_editor" class="form-control" rows="3" placeholder="Brief summary of the product (shows next to price)..."></textarea>
                         </div>
 
                         <div class="mb-3">
@@ -191,9 +195,12 @@
                             </div>
                             <div style="max-height: 180px; overflow-y: auto;" class="border rounded p-2 bg-light" id="categories-list-container">
                                 <?php foreach ($categories as $cat): ?>
-                                    <div class="form-check mb-2 category-item-row" data-id="<?= $cat['id'] ?>" data-name="<?= esc(strtolower($cat['name'])) ?>">
+                                    <div class="form-check mb-2 category-item-row" data-id="<?= $cat['id'] ?>" data-name="<?= esc(strtolower($cat['name'])) ?>" style="margin-left: <?= ($cat['depth'] ?? 0) * 24 ?>px;">
                                         <input class="form-check-input" type="checkbox" name="category_ids[]" value="<?= $cat['id'] ?>" id="cat_<?= $cat['id'] ?>">
-                                        <label class="form-check-label text-dark" for="cat_<?= $cat['id'] ?>">
+                                        <label class="form-check-label text-dark" for="cat_<?= $cat['id'] ?>" style="cursor: pointer;">
+                                            <?php if (($cat['depth'] ?? 0) > 0): ?>
+                                                <span class="text-muted"><?= str_repeat('—', $cat['depth']) ?></span> 
+                                            <?php endif; ?>
                                             <?= esc($cat['name']) ?>
                                         </label>
                                     </div>
@@ -292,19 +299,14 @@
     </div>
 </div>
 
-<!-- Load CKEditor CDN -->
-<script src="https://cdn.ckeditor.com/ckeditor5/36.0.1/classic/ckeditor.js"></script>
-
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // 1. Initialize CKEditor 5
-    ClassicEditor
-        .create(document.querySelector('#editor'), {
-            toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', '|', 'undo', 'redo']
-        })
-        .catch(error => {
-            console.error(error);
-        });
+    // Initialize CKEditor on Description and Short Description
+    initAppCKEditor('#editor');
+    initAppCKEditor('#short_description_editor');
+
+    // Initialize Select2 colors multiple
+    $('.select2-colors-multiple').select2({ placeholder: "Choose colors...", allowClear: true });
 
     // 2. Editable Auto-Slug Generation Logic + Real-time Duplicate Check
     const nameInput = document.getElementById('name-input');

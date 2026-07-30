@@ -83,7 +83,10 @@ class SeoPages extends BaseController
                 }
             }
 
+            $content = $this->request->getPost('content');
+
             $updateData = [
+                'content'       => $content,
                 'meta_title'    => $metaTitle,
                 'meta_desc'     => $metaDesc,
                 'twitter_card'  => $twitterCard,

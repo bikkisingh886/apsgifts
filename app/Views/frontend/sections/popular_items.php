@@ -70,7 +70,7 @@ $trending = $productModel->getTrending($limit);
                 <div class="tab-content wow fadeInUp" data-wow-delay=".25s" id="item-tabContent-popular">
                     <!-- Tab 1: Best Sellers -->
                     <div class="tab-pane show active" id="pill-pop-tab1" role="tabpanel" aria-labelledby="pop-tab1" tabindex="0">
-                        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">
+                        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-2 g-md-3">
                             <?php if (empty($bestSellers)): ?>
                                 <div class="col-12"><p class="text-muted">No best sellers found.</p></div>
                             <?php else: ?>
@@ -85,7 +85,7 @@ $trending = $productModel->getTrending($limit);
                     
                     <!-- Tab 2: On Sale -->
                     <div class="tab-pane" id="pill-pop-tab2" role="tabpanel" aria-labelledby="pop-tab2" tabindex="0">
-                        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">
+                        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-2 g-md-3">
                             <?php if (empty($onSale)): ?>
                                 <div class="col-12"><p class="text-muted">No on-sale products found.</p></div>
                             <?php else: ?>
@@ -100,7 +100,7 @@ $trending = $productModel->getTrending($limit);
                     
                     <!-- Tab 3: Top Rated -->
                     <div class="tab-pane" id="pill-pop-tab3" role="tabpanel" aria-labelledby="pop-tab3" tabindex="0">
-                        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">
+                        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-2 g-md-3">
                             <?php if (empty($topRated)): ?>
                                 <div class="col-12"><p class="text-muted">No top-rated products found.</p></div>
                             <?php else: ?>

@@ -8,6 +8,7 @@ use App\Models\CategoryModel;
 use App\Models\ProductImageModel;
 use App\Models\OfferModel;
 use App\Models\CityModel;
+use App\Models\ColorModel;
 
 class Products extends BaseController
 {
@@ -16,6 +17,7 @@ class Products extends BaseController
     protected $productImageModel;
     protected $offerModel;
     protected $cityModel;
+    protected $colorModel;
 
     public function initController(\CodeIgniter\HTTP\RequestInterface $request, \CodeIgniter\HTTP\ResponseInterface $response, \Psr\Log\LoggerInterface $logger)
     {
@@ -26,6 +28,7 @@ class Products extends BaseController
         $this->productImageModel = new ProductImageModel();
         $this->offerModel = new OfferModel();
         $this->cityModel = new CityModel();
+        $this->colorModel = new ColorModel();
     }
 
     /**
@@ -57,7 +60,7 @@ class Products extends BaseController
             $shortDescription = $this->request->getPost('short_description');
             $metaTitle = $this->request->getPost('meta_title');
             $metaDesc = $this->request->getPost('meta_desc');
-            $color = $this->request->getPost('color');
+            $colorIds = $this->request->getPost('color_ids') ?? [];
 
             // Flags
             $isBestseller = (int)$this->request->getPost('is_bestseller');
@@ -156,7 +159,6 @@ class Products extends BaseController
                 'is_trending'        => $isTrending,
                 'is_customizable'    => $isCustomizable,
                 'customization_type' => $customizationType,
-                'color'              => !empty($color) ? $color : null,
                 'is_active'          => 1,
                 'hide_from_frontend' => $hideFromFrontend,
                 'twitter_card'       => $twitterCard,
@@ -190,7 +192,7 @@ class Products extends BaseController
                 }
             }
 
-            $productId = $this->productModel->insertProduct($saveData, $categoryIds, $uploadedImages, $cityMappings, $comboItems);
+            $productId = $this->productModel->insertProduct($saveData, $categoryIds, $uploadedImages, $cityMappings, $comboItems, $colorIds);
 
             if ($productId) {
                 $this->logActivity('products', 'create', "Created product: $name ($sku)");
@@ -201,9 +203,10 @@ class Products extends BaseController
             }
         }
 
-        $data['categories'] = $this->categoryModel->findAll();
+        $data['categories'] = $this->categoryModel->getHierarchicalFlatList();
         $data['offers'] = $this->offerModel->findAll();
         $data['cities'] = $this->cityModel->orderBy('name', 'ASC')->findAll();
+        $data['colors'] = $this->colorModel->where('is_active', 1)->orderBy('name', 'ASC')->findAll();
         $data['all_products'] = $this->productModel->where('product_type', 'simple')->orderBy('name', 'ASC')->findAll();
         $data['title'] = 'Add New Product';
         return view('admin/products/create', $data);
@@ -235,7 +238,7 @@ class Products extends BaseController
             $metaTitle = $this->request->getPost('meta_title');
             $metaDesc = $this->request->getPost('meta_desc');
             $isActive = (int)$this->request->getPost('is_active');
-            $color = $this->request->getPost('color');
+            $colorIds = $this->request->getPost('color_ids') ?? [];
 
             // Flags
             $isBestseller = (int)$this->request->getPost('is_bestseller');
@@ -337,7 +340,6 @@ class Products extends BaseController
                 'is_trending'        => $isTrending,
                 'is_customizable'    => $isCustomizable,
                 'customization_type' => $customizationType,
-                'color'              => !empty($color) ? $color : null,
                 'is_active'          => $isActive,
                 'hide_from_frontend' => $hideFromFrontend,
                 'twitter_card'       => $twitterCard,
@@ -377,7 +379,7 @@ class Products extends BaseController
 
             $existingImageAlts = $this->request->getPost('existing_image_alts') ?? [];
 
-            if ($this->productModel->updateProduct((int)$id, $updateData, $categoryIds, $newImages, [], $cityMappings, $comboItems, $existingImageAlts)) {
+            if ($this->productModel->updateProduct((int)$id, $updateData, $categoryIds, $newImages, [], $cityMappings, $comboItems, $existingImageAlts, $colorIds)) {
                 $this->logActivity('products', 'edit', "Updated product: $name ($sku)");
                 if ($this->request->isAJAX()) {
                     return $this->response->setJSON(['success' => true]);
@@ -393,9 +395,10 @@ class Products extends BaseController
         }
 
         $data['product'] = $product;
-        $data['categories'] = $this->categoryModel->findAll();
+        $data['categories'] = $this->categoryModel->getHierarchicalFlatList();
         $data['offers'] = $this->offerModel->findAll();
         $data['cities'] = $this->cityModel->orderBy('name', 'ASC')->findAll();
+        $data['colors'] = $this->colorModel->where('is_active', 1)->orderBy('name', 'ASC')->findAll();
         $data['all_products'] = $this->productModel->where('product_type', 'simple')->where('id !=', $id)->orderBy('name', 'ASC')->findAll();
         $data['title'] = 'Edit Product: ' . $product['name'];
         

@@ -22,19 +22,30 @@
                             <div id="cat-slug-feedback" class="mt-1" style="display:none;"></div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label font-weight-bold">Parent Category</label>
-                            <select name="parent_id" class="form-select">
-                                <option value="0">-- None (Root Category) --</option>
+                            <label class="form-label font-weight-bold">Parent Category(s)</label>
+                            <div class="mb-2">
+                                <input type="text" id="parent-category-search" class="form-control form-control-sm text-dark" placeholder="Search parent categories...">
+                            </div>
+                            <div style="max-height: 150px; overflow-y: auto;" class="border rounded p-2 bg-light" id="parent-categories-list-container">
                                 <?php if (!empty($categories_list)): ?>
                                     <?php foreach ($categories_list as $cl): ?>
-                                        <option value="<?= $cl['id'] ?>"><?= esc($cl['name']) ?></option>
+                                        <div class="form-check mb-2 parent-category-item-row" data-name="<?= esc(strtolower($cl['name'])) ?>" style="margin-left: <?= ($cl['depth'] ?? 0) * 24 ?>px;">
+                                            <input class="form-check-input" type="checkbox" name="parent_ids[]" value="<?= $cl['id'] ?>" id="parent_cat_<?= $cl['id'] ?>">
+                                            <label class="form-check-label text-dark" for="parent_cat_<?= $cl['id'] ?>" style="cursor:pointer;">
+                                                <?php if (($cl['depth'] ?? 0) > 0): ?>
+                                                    <span class="text-muted"><?= str_repeat('—', $cl['depth']) ?></span> 
+                                                <?php endif; ?>
+                                                <?= esc($cl['name']) ?>
+                                            </label>
+                                        </div>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
-                            </select>
+                            </div>
+                            <small class="text-muted d-block mt-1">Select multiple parent categories if applicable. Leave all unchecked for a Root Category.</small>
                         </div>
                         <div class="mb-3">
                             <label class="form-label font-weight-bold">Top Summary (shown below category title on page)</label>
-                            <textarea name="summary" class="form-control" rows="3" placeholder="Send Birthday Gifts Online with Same Day Delivery across India..."></textarea>
+                            <textarea name="summary" id="cat-summary-editor" class="form-control" rows="3" placeholder="Send Birthday Gifts Online with Same Day Delivery across India..."></textarea>
                         </div>
                         <div class="mb-3">
                             <label class="form-label font-weight-bold">SEO Footer Content (long-form, shown at bottom)</label>
@@ -152,7 +163,7 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td><span class="text-cyan">/<?= esc($cat['slug']) ?></span></td>
+                                    <td><span class="text-cyan">/<?= esc($cat['slug_path'] ?? $cat['slug']) ?></span></td>
                                     <td><span class="badge bg-secondary"><?= $cat['product_count'] ?></span></td>
                                     <td>
                                         <a href="<?= base_url('admin/categories/toggle/' . $cat['id']) ?>" class="badge badge-status <?= $cat['is_active'] ? 'bg-success text-white' : 'bg-danger text-white' ?>">
@@ -175,14 +186,9 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // 1. Initialize CKEditor 5 on category footer
-    ClassicEditor
-        .create(document.querySelector('#cat-footer-editor'), {
-            toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', '|', 'undo', 'redo']
-        })
-        .catch(error => {
-            console.error(error);
-        });
+    // Initialize CKEditor on Top Summary and Footer Content
+    initAppCKEditor('#cat-summary-editor');
+    initAppCKEditor('#cat-footer-editor');
 
     // 2. Auto-Slug Generation + Real-time Duplicate Check
     const nameInput = document.getElementById('cat-name-input');
@@ -246,6 +252,23 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
                 reader.readAsDataURL(file);
             }
+        });
+    }
+
+    // Search parent categories in checkboxes list
+    const parentCategorySearch = document.getElementById('parent-category-search');
+    if (parentCategorySearch) {
+        parentCategorySearch.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            const parentRows = document.querySelectorAll('.parent-category-item-row');
+            parentRows.forEach(row => {
+                const name = row.getAttribute('data-name');
+                if (name.includes(query)) {
+                    row.style.setProperty('display', 'block', 'important');
+                } else {
+                    row.style.setProperty('display', 'none', 'important');
+                }
+            });
         });
     }
 });

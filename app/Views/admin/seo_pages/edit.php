@@ -8,8 +8,37 @@
             <a href="<?= base_url('admin/seo-pages') ?>" class="btn btn-outline-secondary btn-sm"><i class="far fa-arrow-left me-1"></i> Back to Page List</a>
         </div>
 
+        <?php if ($page['page_key'] === 'faq'): ?>
+            <div class="alert alert-info border-info mb-4 shadow-sm" style="background-color: #f0f8ff; border-left: 4px solid #00a8cc;">
+                <h6 class="fw-bold text-dark mb-1"><i class="far fa-question-circle me-2 text-cyan"></i> Structured FAQ Questions & Answers</h6>
+                <p class="mb-2 small text-muted">To add, edit, re-order, or delete structured Question & Answer items displayed in the frontend FAQ page accordion, manage them directly in the <strong>FAQ Manager</strong>.</p>
+                <a href="<?= base_url('admin/faqs') ?>" class="btn btn-cyan btn-sm"><i class="far fa-tasks me-1"></i> Open FAQ Manager</a>
+            </div>
+        <?php elseif ($page['page_key'] === 'home'): ?>
+            <div class="alert alert-info border-info mb-4 shadow-sm" style="background-color: #f0f8ff; border-left: 4px solid #00a8cc;">
+                <h6 class="fw-bold text-dark mb-1"><i class="far fa-home me-2 text-cyan"></i> Dynamic Homepage Sections</h6>
+                <p class="mb-2 small text-muted">Homepage sections, sliders, banners, and product grids are managed visually in the <strong>Homepage Manager</strong>.</p>
+                <a href="<?= base_url('admin/homepage') ?>" class="btn btn-cyan btn-sm"><i class="far fa-sliders-h me-1"></i> Open Homepage Manager</a>
+            </div>
+        <?php elseif ($page['page_key'] === 'contact'): ?>
+            <div class="alert alert-info border-info mb-4 shadow-sm" style="background-color: #f0f8ff; border-left: 4px solid #00a8cc;">
+                <h6 class="fw-bold text-dark mb-1"><i class="far fa-address-book me-2 text-cyan"></i> Contact Information & Settings</h6>
+                <p class="mb-2 small text-muted">Company address, phone number, email address, and working hours are managed in <strong>Settings</strong>.</p>
+                <a href="<?= base_url('admin/settings') ?>" class="btn btn-cyan btn-sm"><i class="far fa-cog me-1"></i> Open Settings</a>
+            </div>
+        <?php endif; ?>
+
         <form action="<?= base_url('admin/seo-pages/edit/' . $page['id']) ?>" method="post" enctype="multipart/form-data">
             <?= csrf_field() ?>
+
+            <?php if (!in_array($page['page_key'], ['home', 'shop', 'faq', 'contact'])): ?>
+                <!-- Page Body Content Card (CKEditor with Source HTML mode) -->
+                <div class="card-custom mb-4">
+                    <h5 class="text-dark mb-2"><i class="far fa-file-edit me-2 text-cyan"></i> Page Body Content</h5>
+                    <p class="text-muted small mb-3">Edit the rich HTML content for this page. Use the <strong>Source</strong> button in the editor toolbar to view and edit raw HTML code directly.</p>
+                    <textarea name="content" id="page_content_editor" class="form-control" rows="12"><?= old('content', $page['content'] ?? '') ?></textarea>
+                </div>
+            <?php endif; ?>
 
             <div class="row">
                 <!-- Left Column (Standard SEO & Schema) -->
@@ -120,4 +149,10 @@
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    initAppCKEditor('#page_content_editor');
+});
+</script>
 <?= $this->endSection() ?>

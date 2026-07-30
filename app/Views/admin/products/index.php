@@ -57,11 +57,16 @@
                                         <small class="text-cyan">SKU: <?= esc($prod['sku']) ?></small>
                                     </td>
                                     <td>
-                                        <?php
-                                        $catNames = array_column($prod['categories'] ?? [], 'name');
-                                        echo esc(implode(', ', $catNames));
-                                        ?>
-                                    </td>
+                                         <?php if (!empty($prod['categories'])): ?>
+                                             <?php foreach ($prod['categories'] as $cat): ?>
+                                                 <span class="badge bg-cyan text-dark mb-1 d-inline-block" style="font-size: 0.75rem; border: 1px solid rgba(255,255,255,0.15);">
+                                                     <?= esc($cat['full_path']) ?>
+                                                 </span><br>
+                                             <?php endforeach; ?>
+                                         <?php else: ?>
+                                             <span class="text-muted small">No category</span>
+                                         <?php endif; ?>
+                                     </td>
                                     <td>
                                         <?php if ($prod['offer_value'] > 0): ?>
                                             <?php

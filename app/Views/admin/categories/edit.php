@@ -21,8 +21,22 @@
                             <div id="edit-cat-slug-feedback" class="mt-1" style="display:none;"></div>
                         </div>
                         <div class="mb-3">
+                            <label class="form-label font-weight-bold">Parent Category</label>
+                            <select name="parent_id" class="form-select text-dark" id="edit-parent-category-select">
+                                <option value="">None (Root Category)</option>
+                                <?php if (!empty($categories_list)): ?>
+                                    <?php foreach ($categories_list as $cl): ?>
+                                        <option value="<?= $cl['id'] ?>" <?= ($category['parent_id'] == $cl['id']) ? 'selected' : '' ?>>
+                                            <?= str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $cl['depth'] ?? 0) ?><?= (($cl['depth'] ?? 0) > 0 ? '↳ ' : '') ?><?= esc($cl['name']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
+                            <small class="text-muted d-block mt-1">Select the parent category. Select 'None' for a Root Category.</small>
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label font-weight-bold">Top Summary (shown below category title on page)</label>
-                            <textarea name="summary" class="form-control text-dark" rows="3"><?= esc($category['summary']) ?></textarea>
+                            <textarea name="summary" id="edit-cat-summary-editor" class="form-control text-dark" rows="3"><?= esc($category['summary']) ?></textarea>
                         </div>
                         <div class="mb-3">
                             <label class="form-label font-weight-bold">SEO Footer Content (long-form, shown at bottom)</label>
@@ -116,14 +130,9 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // 1. Initialize CKEditor 5 on category footer
-    ClassicEditor
-        .create(document.querySelector('#edit-cat-footer-editor'), {
-            toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', '|', 'undo', 'redo']
-        })
-        .catch(error => {
-            console.error(error);
-        });
+    // Initialize CKEditor on Top Summary and Footer Content
+    initAppCKEditor('#edit-cat-summary-editor');
+    initAppCKEditor('#edit-cat-footer-editor');
 
     const CAT_EDIT_ID = <?= (int)$category['id'] ?>;
 
@@ -138,7 +147,9 @@ document.addEventListener("DOMContentLoaded", function() {
         if (!slug || slug.length < 2) { slugFeedback.style.display = 'none'; return; }
         clearTimeout(slugCheckTimer);
         slugCheckTimer = setTimeout(function() {
-            var url = '<?= base_url('admin/categories/check-slug') ?>?slug=' + encodeURIComponent(slug) + '&id=' + CAT_EDIT_ID;
+            const parentSelect = document.getElementById('edit-parent-category-select');
+            const parentId = parentSelect ? parentSelect.value : '';
+            var url = '<?= base_url('admin/categories/check-slug') ?>?slug=' + encodeURIComponent(slug) + '&id=' + CAT_EDIT_ID + '&parent_id=' + parentId;
             fetch(url)
                 .then(r => r.json())
                 .then(data => {
@@ -170,6 +181,15 @@ document.addEventListener("DOMContentLoaded", function() {
             autoSlug = (this.value === "");
             checkEditCatSlug(this.value);
         });
+
+        const parentSelect = document.getElementById('edit-parent-category-select');
+        if (parentSelect) {
+            parentSelect.addEventListener('change', function() {
+                if (slugInput.value !== '') {
+                    checkEditCatSlug(slugInput.value);
+                }
+            });
+        }
     }
 
     // 3. Image File Upload Preview Logic
@@ -189,6 +209,22 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
                 reader.readAsDataURL(file);
             }
+        });
+    }
+    // Search parent categories in checkboxes list
+    const parentCategorySearch = document.getElementById('parent-category-search');
+    if (parentCategorySearch) {
+        parentCategorySearch.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            const parentRows = document.querySelectorAll('.parent-category-item-row');
+            parentRows.forEach(row => {
+                const name = row.getAttribute('data-name');
+                if (name.includes(query)) {
+                    row.style.setProperty('display', 'block', 'important');
+                } else {
+                    row.style.setProperty('display', 'none', 'important');
+                }
+            });
         });
     }
 });

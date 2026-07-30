@@ -187,16 +187,10 @@
     </div>
 </div>
 
-<script src="https://cdn.ckeditor.com/ckeditor5/36.0.1/classic/ckeditor.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    ClassicEditor.create(document.querySelector('#express_shipping_info'), {
-        toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', '|', 'undo', 'redo']
-    }).catch(error => { console.error(error); });
-
-    ClassicEditor.create(document.querySelector('#courier_shipping_info'), {
-        toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', '|', 'undo', 'redo']
-    }).catch(error => { console.error(error); });
+    initAppCKEditor('#express_shipping_info').catch(error => { console.error(error); });
+    initAppCKEditor('#courier_shipping_info').catch(error => { console.error(error); });
 });
 
 function previewLogo(event) {

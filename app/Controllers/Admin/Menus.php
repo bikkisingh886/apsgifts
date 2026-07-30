@@ -54,8 +54,8 @@ class Menus extends BaseController
             }
         }
 
-        // Load Categories
-        $categories = $this->categoryModel->orderBy('name', 'ASC')->findAll();
+        // Load Categories hierarchically
+        $categories = $this->categoryModel->getHierarchicalFlatList();
 
         // Load Products (only simple products, max 100 for builder search)
         $products = $this->productModel->where('product_type', 'simple')->orderBy('name', 'ASC')->limit(100)->findAll();
@@ -269,5 +269,29 @@ class Menus extends BaseController
                 $this->traverseAndFlatten($indexed, $id, $depth + 1, $tree);
             }
         }
+    }
+
+    /**
+     * Set the selected menu as active for the frontend header navigation.
+     */
+    public function activate($id = null)
+    {
+        $this->checkPermission('menus', 'edit');
+        if ($id !== null) {
+            $menu = $this->menuModel->find($id);
+            if ($menu) {
+                // Set all other menus' is_active = 0
+                $this->menuModel->where('id !=', $id)->set(['is_active' => 0])->update();
+                // Set this menu's is_active = 1
+                $this->menuModel->update($id, ['is_active' => 1]);
+
+                // Clear frontend menu cache!
+                cache()->delete('frontend_main_menu');
+
+                $this->logActivity('menus', 'edit', "Activated menu: {$menu['name']} (ID: $id)");
+                $this->session->setFlashdata('success', 'Menu activated successfully and set as primary header navigation.');
+            }
+        }
+        return redirect()->to(base_url('admin/menus?menu_id=' . $id));
     }
 }

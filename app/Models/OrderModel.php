@@ -26,15 +26,18 @@ class OrderModel extends Model
         $db = \Config\Database::connect();
         $db->transStart();
 
-        // 1. Generate Unique Order Number
-        $order_number = 'GS' . strtoupper(substr(uniqid(), -6)) . rand(10, 99);
-        $order_data['order_number'] = $order_number;
+        // 1. Temporary placeholder order number
+        $order_data['order_number'] = 'TEMP_' . time() . '_' . rand(100, 999);
 
         // 2. Insert Order Header
         $db->table('orders')->insert($order_data);
         $order_id = $db->insertID();
 
-        // 3. Insert Order Items
+        // 3. Format Exact Order Number (APS00001, APS00002, ..., APS99999, APS100000)
+        $order_number = sprintf('APS%05d', $order_id);
+        $db->table('orders')->where('id', $order_id)->update(['order_number' => $order_number]);
+
+        // 4. Insert Order Items
         foreach ($items as $item) {
             $custData = [];
             if (!empty($item['customization_text'])) {
@@ -46,8 +49,9 @@ class OrderModel extends Model
 
             $item_data = [
                 'order_id'           => $order_id,
-                'product_id'         => $item['id'] ?: null,
+                'product_id'         => $item['product_id'] ?? ($item['id'] ?: null),
                 'product_name'       => $item['name'],
+                'color'              => $item['color'] ?? null,
                 'delivery_type'      => $item['delivery_type'],
                 'delivery_date'      => $item['delivery_date'] ?: null,
                 'qty'                => $item['qty'],

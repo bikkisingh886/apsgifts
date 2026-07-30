@@ -3,15 +3,28 @@
 use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
+$routes->set404Override('App\Controllers\Home::notFound');
+$routes->get('404', 'Home::notFound');
+
 $routes->get('/', 'Home::index');
 $routes->post('select-city', 'Home::selectCity');
 $routes->get('search', 'Home::search');
 $routes->get('search/suggestions', 'Home::suggestions');
+$routes->get('about-us', 'Home::about');
 $routes->get('about', 'Home::about');
+$routes->get('contact-us', 'Home::contact');
+$routes->post('contact-us', 'Home::submitContact');
 $routes->get('contact', 'Home::contact');
+$routes->post('contact', 'Home::submitContact');
 $routes->get('faq', 'Home::faq');
+$routes->get('privacy-policy', 'Home::privacy');
 $routes->get('privacy', 'Home::privacy');
+$routes->get('terms-of-service', 'Home::terms');
 $routes->get('terms', 'Home::terms');
+$routes->get('cancellation-policy', 'Home::cancellation');
+$routes->get('cancellation', 'Home::cancellation');
+$routes->get('shipping-policy', 'Home::shipping');
+$routes->get('shipping', 'Home::shipping');
 
 $routes->get('shop', 'Home::shop');
 $routes->get('category/(:any)', 'Category::index/$1');
@@ -40,6 +53,9 @@ $routes->get('cart/remove-coupon', 'Cart::remove_coupon');
 $routes->get('checkout', 'Checkout::index');
 $routes->post('checkout/process', 'Checkout::process');
 $routes->get('checkout/complete/(:segment)', 'Checkout::success/$1');
+$routes->get('checkout/personalize', 'Checkout::personalize');
+$routes->post('checkout/personalize/submit/(:segment)', 'Checkout::personalize_submit/$1');
+$routes->get('checkout/personalize/complete', 'Checkout::complete_personalization');
 
 $routes->post('reviews/submit', 'Reviews::submit');
 
@@ -84,6 +100,28 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function($rout
     $routes->get('cities/delete/(:num)', 'Cities::delete/$1');
     $routes->get('cities/check-slug', 'Cities::checkSlug');
     
+    // Colors CRUD
+    $routes->get('colors', 'Colors::index');
+    $routes->post('colors/create', 'Colors::create');
+    $routes->get('colors/edit/(:num)', 'Colors::edit/$1');
+    $routes->post('colors/edit/(:num)', 'Colors::edit/$1');
+    $routes->get('colors/toggle/(:num)', 'Colors::toggle/$1');
+    $routes->get('colors/delete/(:num)', 'Colors::delete/$1');
+    
+    // FAQs CRUD
+    $routes->get('faqs', 'Faqs::index');
+    $routes->post('faqs/store', 'Faqs::store');
+    $routes->get('faqs/edit_partial/(:num)', 'Faqs::edit_partial/$1');
+    $routes->post('faqs/update/(:num)', 'Faqs::update/$1');
+    $routes->get('faqs/toggle/(:num)', 'Faqs::toggle/$1');
+    $routes->get('faqs/delete/(:num)', 'Faqs::delete/$1');
+    
+    // Enquiries Management
+    $routes->get('enquiries', 'Enquiries::index');
+    $routes->get('enquiries/view_partial/(:num)', 'Enquiries::view_partial/$1');
+    $routes->post('enquiries/update_status/(:num)', 'Enquiries::update_status/$1');
+    $routes->get('enquiries/delete/(:num)', 'Enquiries::delete/$1');
+    
     // Products CRUD
     $routes->get('products', 'Products::index');
     $routes->get('products/create', 'Products::create');
@@ -106,6 +144,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], function($rout
     $routes->get('menus', 'Menus::index');
     $routes->post('menus/create', 'Menus::create');
     $routes->get('menus/delete/(:num)', 'Menus::delete/$1');
+    $routes->get('menus/activate/(:num)', 'Menus::activate/$1');
     $routes->post('menus/update-structure', 'Menus::updateStructure');
     
     // Orders Processing

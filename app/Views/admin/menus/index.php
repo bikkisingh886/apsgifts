@@ -47,9 +47,12 @@
                         </div>
                         <div style="max-height: 200px; overflow-y: auto;" class="border border-light rounded p-2 mb-3 bg-white" id="categories-builder-list">
                             <?php foreach ($categories as $cat): ?>
-                                <div class="form-check mb-2 category-builder-item" data-name="<?= esc(strtolower($cat['name'])) ?>">
-                                    <input class="form-check-input cat-checkbox" type="checkbox" value="<?= $cat['id'] ?>" id="builder_cat_<?= $cat['id'] ?>" data-title="<?= esc($cat['name']) ?>" data-slug="<?= esc($cat['slug']) ?>">
-                                    <label class="form-check-label text-dark" for="builder_cat_<?= $cat['id'] ?>">
+                                <div class="form-check mb-2 category-builder-item" data-name="<?= esc(strtolower($cat['name'])) ?>" style="margin-left: <?= ($cat['depth'] ?? 0) * 20 ?>px;">
+                                    <input class="form-check-input cat-checkbox" type="checkbox" value="<?= $cat['id'] ?>" id="builder_cat_<?= $cat['id'] ?>" data-title="<?= esc($cat['name']) ?>" data-slug="<?= esc($cat['slug_path'] ?? $cat['slug']) ?>">
+                                    <label class="form-check-label text-dark" for="builder_cat_<?= $cat['id'] ?>" style="cursor: pointer;">
+                                        <?php if (($cat['depth'] ?? 0) > 0): ?>
+                                            <span class="text-muted"><?= str_repeat('—', $cat['depth']) ?></span> 
+                                        <?php endif; ?>
                                         <?= esc($cat['name']) ?>
                                     </label>
                                 </div>
@@ -156,8 +159,17 @@
                 </div>
             <?php else: ?>
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <span class="text-cyan fw-bold">Menu Name:</span> <span class="text-dark fw-bold"><?= esc($selectedMenu['name']) ?></span>
+                    <div class="d-flex align-items-center gap-3">
+                        <div>
+                            <span class="text-cyan fw-bold">Menu Name:</span> <span class="text-dark fw-bold"><?= esc($selectedMenu['name']) ?></span>
+                        </div>
+                        <div>
+                            <?php if ($selectedMenu['is_active']): ?>
+                                <span class="badge bg-success text-white px-3 py-1"><i class="far fa-check-circle me-1"></i> Active Header Menu</span>
+                            <?php else: ?>
+                                <a href="<?= base_url('admin/menus/activate/' . $selectedMenu['id']) ?>" class="btn btn-cyan btn-sm py-1"><i class="far fa-power-off me-1"></i> Set as Active Menu</a>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     <div>
                         <a href="<?= base_url('admin/menus/delete/' . $selectedMenu['id']) ?>" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to delete this entire menu?')"><i class="far fa-trash-alt me-1"></i> Delete Menu</a>
@@ -527,7 +539,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 title: title,
                 type: 'category',
                 object_id: chk.value,
-                url: 'category/' + slug,
+                url: slug,
                 is_mega_menu: 0,
                 depth: 0
             });
@@ -601,6 +613,7 @@ document.addEventListener('DOMContentLoaded', function() {
             url: '<?= base_url('admin/menus/update-structure') ?>',
             type: 'POST',
             data: {
+                '<?= csrf_token() ?>': '<?= csrf_hash() ?>',
                 menu_id: menuId,
                 structure: menuItems
             },

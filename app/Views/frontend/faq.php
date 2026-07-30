@@ -3,156 +3,70 @@
 <?= $this->section('content') ?>
 <main class="main">
 
-        <!-- breadcrumb -->
-        <div class="site-breadcrumb">
-            <div class="site-breadcrumb-bg" style="<?= base_url('assets/') ?>background: url(<?= base_url('assets/') ?>img/breadcrumb/01.jpg)"></div>
-            <div class="container">
-                <div class="site-breadcrumb-wrap">
-                    <h4 class="breadcrumb-title">Faq's</h4>
-                    <ul class="breadcrumb-menu">
-                        <li><a href="<?= base_url() ?>"><i class="far fa-home"></i> Home</a></li>
-                        <li class="active">Faq's</li>
-                    </ul>
+    <!-- breadcrumb -->
+    <div class="site-breadcrumb">
+        <div class="site-breadcrumb-bg" style="background: url(<?= base_url('assets/img/breadcrumb/01.jpg') ?>)"></div>
+        <div class="container">
+            <div class="site-breadcrumb-wrap">
+                <h4 class="breadcrumb-title"><?= esc($page_title ?? "Frequently Asked Questions") ?></h4>
+                <ul class="breadcrumb-menu">
+                    <li><a href="<?= base_url() ?>"><i class="far fa-home"></i> Home</a></li>
+                    <li class="active">FAQ</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- breadcrumb end -->
+
+    <!-- faq area -->
+    <div class="faq-area py-100 bg-white">
+        <div class="container">
+            <div class="row">
+                <!-- Left Sidebar: Category Filters -->
+                <div class="col-lg-3 mb-4">
+                    <div class="list-group shadow-sm border-0 rounded-3">
+                        <a href="<?= base_url('faq') ?>" class="list-group-item list-group-item-action <?= ($selectedCategory === 'all') ? 'active' : '' ?>">
+                            <i class="far fa-th-large me-2"></i> All Questions
+                        </a>
+                        <?php if (!empty($categories)): ?>
+                            <?php foreach ($categories as $catName): ?>
+                                <a href="<?= base_url('faq?category=' . urlencode($catName)) ?>" class="list-group-item list-group-item-action <?= ($selectedCategory === $catName) ? 'active' : '' ?>">
+                                    <i class="far fa-angle-right me-2"></i> <?= esc($catName) ?>
+                                </a>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Right Side: FAQ Accordion List -->
+                <div class="col-lg-9">
+                    <?php if (empty($faqs)): ?>
+                        <div class="alert alert-info py-4 text-center rounded-3">
+                            <i class="far fa-info-circle me-2"></i> No questions found in this category.
+                        </div>
+                    <?php else: ?>
+                        <div class="accordion" id="faqAccordion">
+                            <?php foreach ($faqs as $index => $faq): ?>
+                                <div class="accordion-item mb-3 border rounded-3 shadow-sm bg-white overflow-hidden" style="border-color: #eef1f4 !important;">
+                                    <h2 class="accordion-header" id="headingFaq<?= $faq['id'] ?>">
+                                        <button class="accordion-button <?= $index !== 0 ? 'collapsed' : '' ?> fw-bold py-3 px-4 text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFaq<?= $faq['id'] ?>" aria-expanded="<?= $index === 0 ? 'true' : 'false' ?>" aria-controls="collapseFaq<?= $faq['id'] ?>" style="font-size: 1rem; color: #2d3748; box-shadow: none;">
+                                            <span><i class="far fa-question me-2 text-coral" style="color: #e76f51;"></i></span> <?= esc($faq['question']) ?>
+                                        </button>
+                                    </h2>
+                                    <div id="collapseFaq<?= $faq['id'] ?>" class="accordion-collapse collapse <?= $index === 0 ? 'show' : '' ?>" aria-labelledby="headingFaq<?= $faq['id'] ?>" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body py-3 px-4 border-top text-secondary" style="line-height: 1.6; font-size: 0.95rem; background-color: #fafbfc;">
+                                            <?= html_entity_decode(htmlspecialchars_decode($faq['answer'])) ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
-        <!-- breadcrumb end -->
+    </div>
+    <!-- faq area end -->
 
-
-        <!-- faq area -->
-        <div class="faq-area py-100">
-            <div class="container">
-                <div class="row">
-                    <div class="col-lg-3 mb-4">
-                        <div class="list-group">
-                            <a href="#" class="list-group-item list-group-item-action active" aria-current="true">
-                                Most Popular Questions
-                            </a>
-                            <a href="#" class="list-group-item list-group-item-action">Managing Account</a>
-                            <a href="#" class="list-group-item list-group-item-action">Working With Dashboard</a>
-                            <a href="#" class="list-group-item list-group-item-action">Available Payment Methods</a>
-                            <a href="#" class="list-group-item list-group-item-action">Delivery Information</a>
-                            <a href="#" class="list-group-item list-group-item-action">Order Tracking Instructions</a>
-                            <a href="#" class="list-group-item list-group-item-action">Refund Policy</a>
-                            <a href="#" class="list-group-item list-group-item-action">Offers And Discounts</a>
-                            <a href="#" class="list-group-item list-group-item-action">Affiliate Program</a>
-                            <a href="#" class="list-group-item list-group-item-action">Service Terms & Conditions</a>
-                        </div>
-                    </div>
-                    <div class="col-lg-9">
-                        <div class="accordion" id="accordionExample">
-                            <div class="accordion-item">
-                                <h2 class="accordion-header" id="headingOne">
-                                    <button class="accordion-button" type="button" data-bs-toggle="collapse"
-                                        data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                        <span><i class="far fa-question"></i></span> Do I need an account to place an order ?
-                                    </button>
-                                </h2>
-                                <div id="collapseOne" class="accordion-collapse collapse show"
-                                    aria-labelledby="headingOne" data-bs-parent="#accordionExample">
-                                    <div class="accordion-body">
-                                        We denounce with righteous indignation and dislike men who
-                                        are so beguiled and demoralized by the charms of pleasure of the moment, so
-                                        blinded by desire. Ante odio dignissim quam, vitae pulvinar turpis erat ac elit
-                                        eu orci id odio facilisis pharetra.
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="accordion-item">
-                                <h2 class="accordion-header" id="headingTwo">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                        data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                                        <span><i class="far fa-question"></i></span> What payment methods do you accept ?
-                                    </button>
-                                </h2>
-                                <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo"
-                                    data-bs-parent="#accordionExample">
-                                    <div class="accordion-body">
-                                        We denounce with righteous indignation and dislike men who
-                                        are so beguiled and demoralized by the charms of pleasure of the moment, so
-                                        blinded by desire. Ante odio dignissim quam, vitae pulvinar turpis erat ac elit
-                                        eu orci id odio facilisis pharetra.
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="accordion-item">
-                                <h2 class="accordion-header" id="headingThree">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                        data-bs-target="#collapseThree" aria-expanded="false"
-                                        aria-controls="collapseThree">
-                                        <span><i class="far fa-question"></i></span> How long will delivery take ?
-                                    </button>
-                                </h2>
-                                <div id="collapseThree" class="accordion-collapse collapse"
-                                    aria-labelledby="headingThree" data-bs-parent="#accordionExample">
-                                    <div class="accordion-body">
-                                        We denounce with righteous indignation and dislike men who
-                                        are so beguiled and demoralized by the charms of pleasure of the moment, so
-                                        blinded by desire. Ante odio dignissim quam, vitae pulvinar turpis erat ac elit
-                                        eu orci id odio facilisis pharetra.
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="accordion-item">
-                                <h2 class="accordion-header" id="headingFour">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                        data-bs-target="#collapseFour" aria-expanded="false"
-                                        aria-controls="collapseFour">
-                                        <span><i class="far fa-question"></i></span> Do you have discounts for returning customers ?
-                                    </button>
-                                </h2>
-                                <div id="collapseFour" class="accordion-collapse collapse"
-                                    aria-labelledby="headingFour" data-bs-parent="#accordionExample">
-                                    <div class="accordion-body">
-                                        We denounce with righteous indignation and dislike men who
-                                        are so beguiled and demoralized by the charms of pleasure of the moment, so
-                                        blinded by desire. Ante odio dignissim quam, vitae pulvinar turpis erat ac elit
-                                        eu orci id odio facilisis pharetra.
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="accordion-item">
-                                <h2 class="accordion-header" id="headingFive">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                        data-bs-target="#collapseFive" aria-expanded="false"
-                                        aria-controls="collapseFive">
-                                        <span><i class="far fa-question"></i></span> How can I track my order ?
-                                    </button>
-                                </h2>
-                                <div id="collapseFive" class="accordion-collapse collapse"
-                                    aria-labelledby="headingFive" data-bs-parent="#accordionExample">
-                                    <div class="accordion-body">
-                                        We denounce with righteous indignation and dislike men who
-                                        are so beguiled and demoralized by the charms of pleasure of the moment, so
-                                        blinded by desire. Ante odio dignissim quam, vitae pulvinar turpis erat ac elit
-                                        eu orci id odio facilisis pharetra.
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="accordion-item">
-                                <h2 class="accordion-header" id="headingSix">
-                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                        data-bs-target="#collapseSix" aria-expanded="false"
-                                        aria-controls="collapseSix">
-                                        <span><i class="far fa-question"></i></span> What are the product refund conditions ?
-                                    </button>
-                                </h2>
-                                <div id="collapseSix" class="accordion-collapse collapse"
-                                    aria-labelledby="headingSix" data-bs-parent="#accordionExample">
-                                    <div class="accordion-body">
-                                        We denounce with righteous indignation and dislike men who
-                                        are so beguiled and demoralized by the charms of pleasure of the moment, so
-                                        blinded by desire. Ante odio dignissim quam, vitae pulvinar turpis erat ac elit
-                                        eu orci id odio facilisis pharetra.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- faq area end -->
-    
-    </main>
+</main>
 <?= $this->endSection() ?>

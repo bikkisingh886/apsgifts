@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CKEditor Typing Test</title>
+    <script src="https://cdn.ckeditor.com/ckeditor5/36.0.1/super-build/ckeditor.js"></script>
+    <style>
+        .ck-editor__editable_inline { min-height: 250px; }
+    </style>
+</head>
+<body style="padding: 20px;">
+    <h2>CKEditor Test</h2>
+    <textarea id="my-editor">Sample text inside editor</textarea>
+    <script>
+        const editorClass = (typeof CKEDITOR !== 'undefined' && CKEDITOR.ClassicEditor) ? CKEDITOR.ClassicEditor : ClassicEditor;
+        
+        editorClass.create(document.querySelector('#my-editor'), {
+            toolbar: {
+                items: [
+                    'sourceEditing', '|',
+                    'heading', '|',
+                    'fontFamily', 'fontSize', 'fontColor', 'fontBackgroundColor', '|',
+                    'bold', 'italic', 'underline', 'strikethrough', 'subscript', 'superscript', 'removeFormat', '|',
+                    'alignment', '|',
+                    'bulletedList', 'numberedList', 'todoList', '|',
+                    'outdent', 'indent', '|',
+                    'link', 'insertTable', 'blockQuote', 'codeBlock', 'htmlEmbed', 'horizontalLine', 'specialCharacters', '|',
+                    'findAndReplace', 'selectAll', '|',
+                    'undo', 'redo'
+                ],
+                shouldNotGroupWhenFull: true
+            },
+            htmlSupport: {
+                allow: [
+                    {
+                        name: /.*/,
+                        attributes: true,
+                        classes: true,
+                        styles: true
+                    }
+                ]
+            },
+            removePlugins: [
+                'ExportPdf', 'ExportWord', 'CKBox', 'CKFinder', 'EasyImage', 
+                'RealTimeCollaborativeEditing', 'RealTimeCollaborativeComments', 
+                'RealTimeCollaborativeTrackChanges', 'RealTimeCollaborativeRevisionHistory', 
+                'PresenceList', 'Comments', 'TrackChanges', 'RevisionHistory', 
+                'Pagination', 'WProofreader', 'MathType', 'CaseChange'
+            ]
+        }).then(editor => {
+            window.testEditor = editor;
+            console.log('Is Read Only?', editor.isReadOnly);
+            document.body.insertAdjacentHTML('beforeend', '<p id="readonly-status">Is ReadOnly: ' + editor.isReadOnly + '</p>');
+        }).catch(err => {
+            console.error('Error:', err);
+        });
+    </script>
+</body>
+</html>

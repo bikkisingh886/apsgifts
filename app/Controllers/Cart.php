@@ -44,6 +44,7 @@ class Cart extends BaseController
         $qty = (int)$this->request->getPost('qty');
         $deliveryDate = $this->request->getPost('delivery_date');
         $customizationText = $this->request->getPost('customization_text');
+        $color = $this->request->getPost('color');
         $customizationImage = null;
 
         if ($qty <= 0) {
@@ -72,7 +73,7 @@ class Cart extends BaseController
             }
         }
 
-        $success = $this->cartLib->add((int)$productId, $qty, $deliveryDate, $customizationText, $customizationImage);
+        $success = $this->cartLib->add((int)$productId, $qty, $deliveryDate, $customizationText, $customizationImage, $color);
 
         if ($this->request->isAJAX()) {
             if ($success) {

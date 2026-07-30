@@ -51,7 +51,12 @@
                                                 <h6 class="fw-bold mb-1" style="font-size: 0.95rem;">
                                                     <a href="<?= base_url('product/' . $item['sku']) ?>" class="text-decoration-none text-dark"><?= esc($item['name']) ?></a>
                                                 </h6>
-                                                <div class="text-muted small mb-2" style="font-size: 0.75rem;">SKU: <?= esc($item['sku']) ?></div>
+                                                <div class="text-muted small mb-1" style="font-size: 0.75rem;">SKU: <?= esc($item['sku']) ?></div>
+                                                <?php if (!empty($item['color'])): ?>
+                                                    <div class="text-dark small mb-2" style="font-size: 0.8rem;">
+                                                        <strong>Color:</strong> <span class="badge bg-secondary text-white" style="background-color: #6c757d !important;"><?= esc($item['color']) ?></span>
+                                                    </div>
+                                                <?php endif; ?>
                                                 
                                                 <!-- Personalization Details -->
                                                 <?php if (!empty($item['customization_text']) || !empty($item['customization_image'])): ?>

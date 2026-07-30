@@ -30,10 +30,24 @@
                                     <td>
                                         <strong class="text-dark"><?= esc($page['page_name']) ?></strong>
                                     </td>
-                                    <td>
-                                        <code class="text-cyan"><?= esc($page['page_key']) ?></code>
-                                        <div class="small text-muted">URL: <?= base_url($page['page_key'] === 'home' ? '' : ($page['page_key'] === 'shop' ? 'shop' : $page['page_key'])) ?></div>
-                                    </td>
+                                     <td>
+                                         <code class="text-cyan"><?= esc($page['page_key']) ?></code>
+                                         <?php 
+                                            $urlMap = [
+                                                'home' => '',
+                                                'shop' => 'shop',
+                                                'about' => 'about-us',
+                                                'privacy' => 'privacy-policy',
+                                                'terms' => 'terms-of-service',
+                                                'cancellation' => 'cancellation-policy',
+                                                'shipping' => 'shipping-policy',
+                                                'contact' => 'contact-us',
+                                                'faq' => 'faq'
+                                            ];
+                                            $path = $urlMap[$page['page_key']] ?? $page['page_key'];
+                                         ?>
+                                         <div class="small text-muted">URL: <a href="<?= base_url($path) ?>" target="_blank" class="text-muted text-decoration-underline"><?= base_url($path) ?></a></div>
+                                     </td>
                                     <td>
                                         <div class="text-dark" style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                             <?= esc($page['meta_title'] ?: 'Not set') ?>

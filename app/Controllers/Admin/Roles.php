@@ -39,6 +39,7 @@ class Roles extends BaseController
     {
         $modules = [
             'products' => 'Products',
+            'colors' => 'Product Colors',
             'categories' => 'Categories',
             'cities' => 'Delivery Cities',
             'offers' => 'Offers',
@@ -140,6 +141,7 @@ class Roles extends BaseController
 
         $modules = [
             'products' => 'Products',
+            'colors' => 'Product Colors',
             'categories' => 'Categories',
             'cities' => 'Delivery Cities',
             'offers' => 'Offers',

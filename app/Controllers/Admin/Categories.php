@@ -23,7 +23,7 @@ class Categories extends BaseController
     {
         $this->checkPermission('categories', 'view');
         $data['categories'] = $this->categoryModel->getWithProductCounts();
-        $data['categories_list'] = $this->categoryModel->orderBy('name', 'ASC')->findAll();
+        $data['categories_list'] = $this->categoryModel->getHierarchicalFlatList();
         $data['title'] = 'Manage Categories';
         return view('admin/categories/index', $data);
     }
@@ -37,8 +37,11 @@ class Categories extends BaseController
         if (strcasecmp($this->request->getMethod(), 'post') === 0) {
             $name = $this->request->getPost('name');
             $slug = $this->request->getPost('slug');
-            $parentId = $this->request->getPost('parent_id');
-            $parentId = (!empty($parentId) && $parentId != 0) ? (int)$parentId : null;
+            $parentIds = $this->request->getPost('parent_ids') ?? [];
+            if (!is_array($parentIds)) {
+                $parentIds = !empty($parentIds) ? [$parentIds] : [];
+            }
+            $parentIds = array_filter(array_map('intval', $parentIds));
             $summary = $this->request->getPost('summary');
             $footerContent = $this->request->getPost('footer_content');
             $metaTitle = $this->request->getPost('meta_title');
@@ -53,14 +56,7 @@ class Categories extends BaseController
 
             $slug = !empty($slug) ? generate_slug($slug) : generate_slug($name);
 
-            // Check for duplicate slug
-            $existingCat = $this->categoryModel->where('slug', $slug)->first();
-            if ($existingCat) {
-                $this->session->setFlashdata('error', 'Slug "' . $slug . '" is already in use. Please choose a different slug.');
-                return redirect()->to(base_url('admin/categories'));
-            }
-
-            // Handle image upload
+            // Handle image upload once
             $imagePath = null;
             $img = $this->request->getFile('banner_image');
             if ($img && $img->isValid() && !$img->hasMoved()) {
@@ -75,27 +71,80 @@ class Categories extends BaseController
 
             $currentUserId = $this->authLib->getUserId();
 
-            $saveData = [
-                'name'           => $name,
-                'slug'           => $slug,
-                'parent_id'      => $parentId,
-                'summary'        => $summary,
-                'footer_content' => $footerContent,
-                'meta_title'     => $metaTitle,
-                'meta_desc'      => $metaDesc,
-                'is_active'      => $isActive,
-                'image_path'     => $imagePath,
-                'image_alt'      => $imageAlt,
-                'created_by'     => $currentUserId,
-                'updated_by'     => $currentUserId
-            ];
+            if (empty($parentIds)) {
+                // Check duplicate for root category (parent_id is null)
+                $existingCat = $this->categoryModel->groupStart()->where('parent_id', null)->orWhere('parent_id', 0)->groupEnd()->where('slug', $slug)->first();
+                if ($existingCat) {
+                    $this->session->setFlashdata('error', 'Slug "' . $slug . '" is already in use for a Root category. Please choose a different slug.');
+                    return redirect()->to(base_url('admin/categories'));
+                }
 
-            if ($this->categoryModel->insert($saveData)) {
-                cache()->delete('category_tree_menu');
-                $this->logActivity('categories', 'create', "Created category: $name ($slug)");
-                $this->session->setFlashdata('success', 'Category created successfully.');
+                $saveData = [
+                    'name'           => $name,
+                    'slug'           => $slug,
+                    'parent_id'      => null,
+                    'summary'        => $summary,
+                    'footer_content' => $footerContent,
+                    'meta_title'     => $metaTitle,
+                    'meta_desc'      => $metaDesc,
+                    'is_active'      => $isActive,
+                    'image_path'     => $imagePath,
+                    'image_alt'      => $imageAlt,
+                    'created_by'     => $currentUserId,
+                    'updated_by'     => $currentUserId
+                ];
+                $categoryId = $this->categoryModel->insert($saveData);
+                if ($categoryId) {
+                    cache()->delete('category_tree_menu');
+                    $this->logActivity('categories', 'create', "Created category: $name ($slug)");
+                    $this->session->setFlashdata('success', 'Category created successfully.');
+                } else {
+                    $this->session->setFlashdata('error', 'Failed to create category.');
+                }
             } else {
-                $this->session->setFlashdata('error', 'Failed to create category.');
+                $insertedCount = 0;
+                $skippedParents = [];
+                foreach ($parentIds as $parentId) {
+                    // Check duplicate under this parent
+                    $existingCat = $this->categoryModel->where('parent_id', $parentId)->where('slug', $slug)->first();
+                    if ($existingCat) {
+                        $parentCatName = $this->categoryModel->find($parentId)['name'] ?? 'ID ' . $parentId;
+                        $skippedParents[] = $parentCatName;
+                        continue;
+                    }
+
+                    $saveData = [
+                        'name'           => $name,
+                        'slug'           => $slug,
+                        'parent_id'      => $parentId,
+                        'summary'        => $summary,
+                        'footer_content' => $footerContent,
+                        'meta_title'     => $metaTitle,
+                        'meta_desc'      => $metaDesc,
+                        'is_active'      => $isActive,
+                        'image_path'     => $imagePath,
+                        'image_alt'      => $imageAlt,
+                        'created_by'     => $currentUserId,
+                        'updated_by'     => $currentUserId
+                    ];
+                    $categoryId = $this->categoryModel->insert($saveData);
+                    if ($categoryId) {
+                        $insertedCount++;
+                        $this->logActivity('categories', 'create', "Created category: $name ($slug) under parent ID: $parentId");
+                    }
+                }
+
+                cache()->delete('category_tree_menu');
+
+                if ($insertedCount > 0) {
+                    $msg = "Created $insertedCount category pages successfully.";
+                    if (!empty($skippedParents)) {
+                        $msg .= " Skipped under parents (slug already exists): " . implode(', ', $skippedParents);
+                    }
+                    $this->session->setFlashdata('success', $msg);
+                } else {
+                    $this->session->setFlashdata('error', 'Failed to create category. Slugs already exist under all selected parent categories.');
+                }
             }
         }
         return redirect()->to(base_url('admin/categories'));
@@ -121,10 +170,7 @@ class Categories extends BaseController
             $name = $this->request->getPost('name');
             $slug = $this->request->getPost('slug');
             $parentId = $this->request->getPost('parent_id');
-            $parentId = (!empty($parentId) && $parentId != 0) ? (int)$parentId : null;
-            if ($parentId == $id) {
-                $parentId = null; // Prevent circular referencing
-            }
+            $parentId = ($parentId !== '' && $parentId !== null) ? (int)$parentId : null;
             $summary = $this->request->getPost('summary');
             $footerContent = $this->request->getPost('footer_content');
             $metaTitle = $this->request->getPost('meta_title');
@@ -139,13 +185,19 @@ class Categories extends BaseController
 
             $slug = !empty($slug) ? generate_slug($slug) : generate_slug($name);
 
-            // Check for duplicate slug (excluding current category)
-            $existingCat = $this->categoryModel->where('slug', $slug)->where('id !=', $id)->first();
+            // Check for duplicate slug (excluding current category) under the same parent
+            $query = $this->categoryModel->where('slug', $slug)->where('id !=', $id);
+            if (empty($parentId)) {
+                $query->groupStart()->where('parent_id', null)->orWhere('parent_id', 0)->groupEnd();
+            } else {
+                $query->where('parent_id', $parentId);
+            }
+            $existingCat = $query->first();
             if ($existingCat) {
                 if ($this->request->isAJAX()) {
-                    return $this->response->setJSON(['success' => false, 'error' => 'Slug "' . $slug . '" is already in use by another category.']);
+                    return $this->response->setJSON(['success' => false, 'error' => 'Slug "' . $slug . '" is already in use under the selected parent category.']);
                 }
-                $this->session->setFlashdata('error', 'Slug "' . $slug . '" is already in use. Please choose a different slug.');
+                $this->session->setFlashdata('error', 'Slug "' . $slug . '" is already in use under the selected parent category.');
                 return redirect()->to(base_url('admin/categories/edit/' . $id));
             }
 
@@ -204,7 +256,12 @@ class Categories extends BaseController
         }
 
         $data['category'] = $category;
-        $data['categories_list'] = $this->categoryModel->where('id !=', $id)->orderBy('name', 'ASC')->findAll();
+        $descendants = $this->categoryModel->getDescendantIds((int)$id);
+        $flatList = $this->categoryModel->getHierarchicalFlatList();
+        // Remove current category and its descendants to prevent circular reference loops
+        $data['categories_list'] = array_filter($flatList, function($cat) use ($descendants) {
+            return !in_array($cat['id'], $descendants);
+        });
         $data['title'] = 'Edit Category: ' . $category['name'];
         
         if ($this->request->isAJAX()) {
@@ -362,6 +419,8 @@ class Categories extends BaseController
     {
         $slug = generate_slug($this->request->getGet('slug') ?? '');
         $id   = (int)($this->request->getGet('id') ?? 0);
+        $parentId = $this->request->getGet('parent_id');
+        $parentId = ($parentId !== '' && $parentId !== null) ? (int)$parentId : null;
 
         if (empty($slug)) {
             return $this->response->setJSON(['available' => true]);
@@ -370,6 +429,11 @@ class Categories extends BaseController
         $query = $this->categoryModel->where('slug', $slug);
         if ($id > 0) {
             $query->where('id !=', $id);
+        }
+        if (empty($parentId)) {
+            $query->groupStart()->where('parent_id', null)->orWhere('parent_id', 0)->groupEnd();
+        } else {
+            $query->where('parent_id', $parentId);
         }
         $exists = $query->first();
 

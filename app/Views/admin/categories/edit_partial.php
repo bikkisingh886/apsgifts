@@ -15,18 +15,21 @@
             </div>
             <div class="mb-3">
                 <label class="form-label font-weight-bold">Parent Category</label>
-                <select name="parent_id" class="form-select">
-                    <option value="0">-- None (Root Category) --</option>
+                <select name="parent_id" class="form-select text-dark" id="modal-parent-category-select">
+                    <option value="">None (Root Category)</option>
                     <?php if (!empty($categories_list)): ?>
                         <?php foreach ($categories_list as $cl): ?>
-                            <option value="<?= $cl['id'] ?>" <?= $cl['id'] == $category['parent_id'] ? 'selected' : '' ?>><?= esc($cl['name']) ?></option>
+                            <option value="<?= $cl['id'] ?>" <?= ($category['parent_id'] == $cl['id']) ? 'selected' : '' ?>>
+                                <?= str_repeat('&nbsp;&nbsp;&nbsp;&nbsp;', $cl['depth'] ?? 0) ?><?= (($cl['depth'] ?? 0) > 0 ? '↳ ' : '') ?><?= esc($cl['name']) ?>
+                            </option>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </select>
+                <small class="text-muted d-block mt-1">Select the parent category. Select 'None' for a Root Category.</small>
             </div>
             <div class="mb-3">
                 <label class="form-label font-weight-bold">Top Summary (shown below category title on page)</label>
-                <textarea name="summary" class="form-control" rows="2"><?= esc($category['summary']) ?></textarea>
+                <textarea name="summary" id="summary-editor" class="form-control" rows="2"><?= esc($category['summary']) ?></textarea>
             </div>
             <div class="mb-3">
                 <label class="form-label font-weight-bold">SEO Footer Content (long-form, shown at bottom)</label>
@@ -111,7 +114,9 @@
         if (!slug || slug.length < 2) { slugFeedback.style.display = 'none'; return; }
         clearTimeout(slugCheckTimer);
         slugCheckTimer = setTimeout(function() {
-            var url = '<?= base_url('admin/categories/check-slug') ?>?slug=' + encodeURIComponent(slug) + '&id=' + CAT_EDIT_ID;
+            const parentSelect = document.getElementById('modal-parent-category-select');
+            const parentId = parentSelect ? parentSelect.value : '';
+            var url = '<?= base_url('admin/categories/check-slug') ?>?slug=' + encodeURIComponent(slug) + '&id=' + CAT_EDIT_ID + '&parent_id=' + parentId;
             fetch(url)
                 .then(r => r.json())
                 .then(data => {
@@ -143,6 +148,15 @@
             autoSlug = (this.value === "");
             checkModalCatSlug(this.value);
         });
+
+        const parentSelect = document.getElementById('modal-parent-category-select');
+        if (parentSelect) {
+            parentSelect.addEventListener('change', function() {
+                if (slugInput.value !== '') {
+                    checkModalCatSlug(slugInput.value);
+                }
+            });
+        }
     }
 
     // 2. Image File Upload Preview Logic in Modal
